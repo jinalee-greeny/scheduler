@@ -157,9 +157,22 @@ table{width:100%;border-collapse:collapse}
 .mmbar{background:#eef0f2;border-radius:4px;height:8px;overflow:hidden;min-width:80px}
 .mmbar>div{height:100%}
 .mm-total{margin-top:12px;font-size:13px;color:#556}.mm-total b{color:var(--ink);font-size:18px}
-.cpwrap{display:flex;flex-wrap:wrap;gap:6px}
-.cpchip{background:#fff5f5;border:1px solid #f3c9c9;color:#7f1d1d;padding:5px 10px;border-radius:6px;font-size:13px}
-.cparrow{color:#dc2626;align-self:center}
+.cpwrap{display:flex;flex-direction:column}
+.cpstep{display:flex;gap:14px}
+.cpstep .rail{position:relative;width:12px;flex:none}
+.cpstep .rail::before{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;background:#e7eaee}
+.cpstep:first-child .rail::before{top:11px}
+.cpstep:last-child .rail::before{height:11px;bottom:auto}
+.cpdot{position:absolute;left:0;top:9px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #c3cad2;z-index:1}
+.cpstep.done .cpdot{background:#c3cad2;border-color:#c3cad2}
+.cpstep.cur .cpdot{background:var(--acc);border-color:var(--acc);box-shadow:0 0 0 4px rgba(78,203,106,.16)}
+.cpbody{flex:1;padding:2px 0 13px}
+.cpname{font-size:14px;font-weight:650;color:var(--ink)}
+.cpname .id{font-family:var(--mono);color:#b0b6bd;margin-right:7px;font-weight:600;font-size:13px}
+.cpstep.cur .cpbody{background:rgba(78,203,106,.07);border-radius:8px;margin:-2px -8px 6px;padding:6px 8px 8px}
+.cpmeta{font-family:var(--mono);font-size:12px;color:#8a919b;margin-top:3px}
+.cpmeta b{color:#5b6470;font-weight:600}
+.cptag{display:inline-block;margin-left:8px;background:var(--acc);color:#fff;border-radius:5px;padding:1px 7px;font:700 11px/1.55 var(--mono);vertical-align:1px}
 /* modal */
 .overlay{display:none;position:fixed;inset:0;background:rgba(20,25,32,.44);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
 .overlay.on{display:flex}
@@ -719,9 +732,19 @@ function render(){
   document.getElementById('mmtot').innerHTML=roll.total+' MD = '+roll.rnd(roll.total)+' M/M';
   document.getElementById('mmrolenote').innerHTML='완료 '+roll.rnd(roll.done)+' M/M ('+roll.progress+'%) · 잔여 <b>'+roll.rnd(roll.remain)+' M/M</b>';
 
-  document.getElementById('cpcount').textContent='('+sc.critical.length+'개 · 여유 '+sc.minSlack+'일)';
-  const nm={};MODEL.tasks.forEach(t=>nm[t.id]=t.name);
-  document.getElementById('cpwrap').innerHTML=sc.critical.map((c,i)=>'<span class="cpchip">'+c+' '+esc(nm[c])+'</span>'+(i<sc.critical.length-1?'<span class="cparrow">→</span>':'')).join('');
+  document.getElementById('cpcount').textContent='('+sc.critical.length+'단계 · 여유 '+sc.minSlack+'일)';
+  const nm={},stt={},rl={},md={};MODEL.tasks.forEach(t=>{nm[t.id]=t.name;stt[t.id]=t.status;rl[t.id]=t.role;md[t.id]=t.md;});
+  document.getElementById('cpwrap').innerHTML=sc.critical.map(c=>{
+    const s=sc.task[c]||{},status=stt[c]||'예정';
+    const cls=status==='진행중'?'cur':(status==='완료'?'done':'');
+    const dates=(s.es&&s.ef)?(shortD(s.es)+'→'+shortD(s.ef)):'';
+    const tag=status==='진행중'?'<span class="cptag">현재</span>':'';
+    return '<div class="cpstep '+cls+'">'+
+      '<div class="rail"><span class="cpdot"></span></div>'+
+      '<div class="cpbody"><div class="cpname"><span class="id">'+c+'</span>'+esc(nm[c])+tag+'</div>'+
+      '<div class="cpmeta">'+esc(rl[c]||'')+' · <b>'+md[c]+'</b>MD'+(dates?(' · '+dates):'')+'</div></div>'+
+    '</div>';
+  }).join('');
 
   renderList(sc,roll,PM); renderKanban(sc,PM);
 
