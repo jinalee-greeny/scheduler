@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>일정관리 시스템 — 프로젝트 일정(편집 가능)</title>
+<title>Greencast — 역산 프로젝트 스케줄러</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendard-dynamic-subset.min.css">
 <!--
   일정관리 시스템 · 프로젝트 대시보드 + 편집 모드 (02. 일정관리자 / pxd)
@@ -27,7 +27,7 @@ h1{font-size:26px;margin:0}
 /* ===== hero: title + thin timeline bar (no box, sits directly on background) ===== */
 .hero{padding:2px 4px 0}
 .hero-hd{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:20px}
-.hero-hd h1{font-size:22px;margin:0;letter-spacing:-.01em}
+.hero-hd h1{font-size:25px;margin:0;letter-spacing:-.01em}
 .hero-meta{color:#8a919b;font-size:12.5px}
 .rwcap{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:#8a919b;margin-bottom:9px}
 .rwcap .end{color:#5b6470;font-weight:700}
@@ -283,7 +283,7 @@ body{color:var(--ink);background:
 
 /* ============ spacing rhythm (generous, 4/8 scale) ============ */
 .wrap{padding:32px 44px 88px}
-.appbar{gap:22px;padding:13px 22px;margin-bottom:24px}
+.appbar{gap:22px;padding:13px 22px;margin-bottom:38px}
 .pagehd{margin-bottom:10px}
 .assump{margin:14px 0 24px}
 .kpis{margin-bottom:24px}
@@ -386,7 +386,7 @@ body{color:var(--ink);background:
 </style></head>
 <body><div class="wrap">
 <header class="appbar">
-  <div class="brand"><span class="brand-name">일정관리자</span><span class="brand-sub">02 · pxd</span></div>
+  <div class="brand"><span class="brand-name">Greencast</span><span class="brand-sub">02 · pxd</span></div>
   <nav class="appnav"><a class="on">프로젝트</a></nav>
   <div class="appctl">
     <select class="rolefilter" id="roleFilter"><option value="">전체 담당</option></select>
@@ -639,8 +639,8 @@ function render(){
   document.getElementById('kpis').innerHTML=
     '<div class="hero">'+
       '<div class="hero-hd">'+
-        '<h1>일정관리 시스템 구축 · 프로젝트 일정 <span class="editmode-badge'+(editMode?' on':'')+'" id="emBadge">편집 모드</span></h1>'+
-        '<div class="hero-meta">02. 일정관리자 · pxd &nbsp;·&nbsp; 기준 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영 &nbsp;·&nbsp; 업데이트 <span id="lastEdit">'+lastEditLabel+'</span></div>'+
+        '<h1>Greencast 구축 · 프로젝트 일정 <span class="editmode-badge'+(editMode?' on':'')+'" id="emBadge">편집 모드</span></h1>'+
+        '<div class="hero-meta">Greencast · pxd &nbsp;·&nbsp; 기준 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영 &nbsp;·&nbsp; 업데이트 <span id="lastEdit">'+lastEditLabel+'</span></div>'+
       '</div>'+
       '<div class="rwcap"><span>진행률 <b class="pg">'+roll.progress+'%</b> · '+shortD(sc.projStart)+' 시작</span><span class="end">'+shortD(sc.target)+' 오픈</span></div>'+
       '<div class="rwbar">'+
