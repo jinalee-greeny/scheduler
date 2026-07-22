@@ -1,0 +1,925 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일정관리 시스템 — 프로젝트 일정(편집 가능)</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendard-dynamic-subset.min.css">
+<!--
+  일정관리 시스템 · 프로젝트 대시보드 + 편집 모드 (02. 일정관리자 / pxd)
+  ★ 원본 모델: <script id="wbs-model"> JSON (계산 전 입력값). 브라우저 JS 엔진이 역산·M/M을 실시간 계산.
+  기능: WBS·역산 간트 / M/M / 크리티컬 패스 / 주말 on·off / 2026 공휴일 /
+        [편집 모드] 태스크 CRUD · 설정(공휴일·버퍼·단계·M/M기준) · JSON 내보내기·가져오기 · 되돌리기
+  저장: 단일 파일(백엔드 없음). 데이터 영속은 JSON 내보내기/가져오기로. localStorage 미사용.
+-->
+<style>
+:root{--line:#e5e7eb;--ink:#1f2937;--sub:#6b7280;--bg:#f7f8fa;--panel:#1e2530;--crit:#d33f2f;--wend:#eef0f3;--holi:#fbeaea;--acc:#4ecb6a;
+  --mono:"Pretendard Variable",Pretendard,-apple-system,sans-serif;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+/* schedule data speaks in a tabular/mono voice */
+.dates,.wbs,.md,.kc-wbs,.kc-md,.gantt-head .wk,.mmt td.num,.prtxt,.brand-sub{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1720px;margin:0 auto;padding:28px 40px 76px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+h1{font-size:26px;margin:0}
+.sub{color:var(--sub);font-size:13px}
+.assump{color:#8a8f88;font-size:13px;margin:10px 0 18px;font-family:var(--mono)}
+.assump b{color:#5b6470;font-weight:600}
+.kpis{margin-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8a9299}
+/* ===== deadline anchor (hero: the fixed date everything is computed backward from) ===== */
+.anchor{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:22px 26px;display:grid;grid-template-columns:minmax(220px,auto) 1fr;gap:34px;align-items:center;box-shadow:0 1px 2px rgba(20,25,32,.04)}
+.anchor .eyebrow{color:var(--sub)}
+.anchor-date{font-family:var(--mono);font-size:40px;font-weight:600;letter-spacing:-.02em;line-height:1.05;margin-top:6px}
+.anchor-dday{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.04em;color:#fff;background:var(--crit);border-radius:6px;padding:3px 10px}
+.runway .eyebrow{margin-bottom:12px}
+.runway-bar{position:relative;display:flex;height:14px;border-radius:7px;overflow:hidden;background:rgba(0,0,0,.06)}
+.rw-work{background:var(--acc);min-width:2px}
+.rw-buf{background:#a9e4b7;min-width:2px}
+.runway-legend{font-family:var(--mono);font-size:12px;color:#9aa3ab;margin-top:10px;display:flex;gap:16px;flex-wrap:wrap}
+.runway-legend b{color:var(--ink);font-weight:600}
+.runway-legend i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.runway-legend i::before{content:"";width:9px;height:9px;border-radius:2px}
+.runway-legend .lg-work::before{background:var(--acc)}
+.runway-legend .lg-buf::before{background:#a9e4b7}
+/* ===== metric strip (secondary, flat) ===== */
+.strip{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px}
+.cell{background:#ffffff;padding:14px 16px}
+.cell .l{color:var(--sub);font-size:12px;letter-spacing:.01em;margin-bottom:6px}
+.cell .v{font-size:26px;font-weight:750;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cell .v small{font-size:12px;font-weight:600;color:var(--sub);font-family:var(--mono)}
+.cell.warn .v{color:#b45309}
+.cell .d2{font-family:var(--mono);font-size:12px;margin-top:3px;color:var(--sub)}
+.progress{height:6px;background:#eceef1;border-radius:4px;margin-top:8px;overflow:hidden}
+.progress>div{height:100%;background:#16a34a}
+@media(max-width:860px){.anchor{grid-template-columns:1fr;gap:18px}.strip{grid-template-columns:repeat(2,1fr)}}
+.ctrlbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.tabs{display:flex;gap:4px}
+.tab{padding:10px 17px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:14px;color:#556}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rightctl{margin-left:auto;display:flex;align-items:center;gap:10px}
+.wtoggle{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+.wtoggle .lab{font-size:13px;color:#556}.wtoggle .lab b{color:var(--ink)}
+.sw{position:relative;width:42px;height:23px;border-radius:20px;background:#cbd2da;cursor:pointer;transition:.15s;flex:none}
+.sw.on{background:var(--acc)}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw.on::after{transform:translateX(19px)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 13px;font-size:14px;cursor:pointer;color:#334}
+.btn:hover{background:#f2f4f7}
+.btn.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
+.btn.primary:hover{background:#3bb95a}
+.btn.danger{color:#c0392b;border-color:#f0c9c4}
+.btn.small{padding:5px 9px;font-size:13px}
+.edittoolbar{display:none;gap:8px;flex-wrap:wrap;background:#eff4ff;border:1px solid #cfe0ff;border-radius:10px;padding:10px 12px;margin-bottom:12px;align-items:center}
+.edittoolbar.on{display:flex}
+.edittoolbar .tt{font-size:13px;color:#334;font-weight:600;margin-right:4px}
+.editmode-badge{display:none;background:#fde68a;color:#7a5c00;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700}
+.editmode-badge.on{display:inline-block}
+.panel{display:none} .panel.on{display:block}
+.card{background:#ffffff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+.gtbl th,.gtbl td{border-bottom:1px solid var(--line);padding:10px 11px;text-align:left;vertical-align:middle}
+.gtbl thead th{background:#f3f4f6;font-family:var(--mono);letter-spacing:.04em;font-size:13px;color:var(--sub);font-weight:600}
+.gantt-head{position:relative;height:24px;overflow:hidden}
+.gantt-head .wk{position:absolute;font-size:12px;color:#9aa2ab;transform:translateX(-50%);white-space:nowrap}
+.gantt-head .wk.mon{color:#5b6470;font-weight:700}
+.gtbl th.gantt-col{width:var(--gcell,46%)}
+.gantt-cell{position:relative;height:32px;min-width:var(--gcell,460px);overflow:hidden}
+/* ===== timeline zoom + frozen left columns ===== */
+.gantt-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:8px}
+.gantt-toolbar .gtt-lab{font-size:12px;color:var(--sub);font-weight:600}
+.zoomseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.zoomseg button{border:0;border-left:1px solid var(--line);background:#fff;padding:6px 14px;font-size:13px;color:#556;cursor:pointer;font-family:inherit}
+.zoomseg button:first-child{border-left:0}
+.zoomseg button.on{background:var(--ink);color:#fff}
+.gscroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
+/* freeze WBS(1) + 태스크명(2); box-sizing:border-box makes col1 exactly 56px so col2's sticky offset is deterministic */
+.gtbl th:nth-child(1),.gtbl td.wbs{position:sticky;left:0;z-index:5;width:56px;min-width:56px;max-width:56px;background:#ffffff}
+.gtbl th:nth-child(2),.gtbl td.tname{position:sticky;left:56px;z-index:5;background:#ffffff;min-width:220px;box-shadow:6px 0 8px -6px rgba(20,25,32,.16)}
+.gtbl td.tname{white-space:nowrap}
+.gtbl thead th:nth-child(1),.gtbl thead th:nth-child(2){background:#f3f4f6;z-index:6}
+/* category (단계) row header stays frozen while timeline scrolls */
+.gtbl .phase-row td:first-child{position:sticky;left:0;z-index:5}
+.gtbl .phase-row td.gantt-cell{z-index:0}
+/* fold toggle lives in the 태스크 header, at the freeze boundary */
+.foldtog{float:right;border:1px solid var(--line);background:#fff;border-radius:6px;padding:0 8px;font-size:14px;line-height:1.55;color:#556;cursor:pointer;font-family:var(--mono)}
+.foldtog:hover{background:#f2f4f7;color:var(--ink)}
+/* day view: per-day vertical gridlines (28px must match perDay in render) */
+.gtbl.gday .gantt-cell{background-image:repeating-linear-gradient(90deg,transparent 0 27px,#e9ebef 27px 28px)}
+/* auto/manual fold: hide 담당·MD·기간·상태 (cols 3–6) */
+/* fold: collapse cols 3–6 to zero width — NOT display:none (which breaks table column
+   alignment with the colspan phase rows and makes the timeline column double-count → runaway width) */
+.gscroll.gfold .gtbl tr>*:nth-child(3),.gscroll.gfold .gtbl tr>*:nth-child(4),.gscroll.gfold .gtbl tr>*:nth-child(5),.gscroll.gfold .gtbl tr>*:nth-child(6){width:0;min-width:0;max-width:0;padding-left:0;padding-right:0;border:0;overflow:hidden;white-space:nowrap}
+.shade{position:absolute;top:0;bottom:0;z-index:0}
+.wgrid{position:absolute;top:0;bottom:0;width:0;border-left:1px solid #e2e4e9;z-index:1}
+.shade.wend{background:var(--wend)}.shade.holi{background:var(--holi)}
+.bar{position:absolute;top:8px;height:16px;border-radius:4px;opacity:.94;z-index:2}
+.bar.done{opacity:.5}
+.bar.crit{box-shadow:0 0 0 1px var(--crit)}
+.phase-row td{background:#eef1f5;font-weight:700;font-size:13px;padding:8px 8px}
+.phase-row .addtask{float:right;font-weight:500}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.pmm{color:var(--sub);font-weight:500;font-size:12px;margin-left:6px}
+.wbs{color:var(--sub);font-variant-numeric:tabular-nums;width:38px}
+.tname{font-weight:600}
+.tname.editable{cursor:pointer;text-decoration:underline dotted #b8c0c8;text-underline-offset:3px}
+.tname.editable:hover{color:var(--acc)}
+.crittag{font-family:var(--mono);font-size:12px;background:var(--crit);color:#fff;border:0;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle;font-weight:700;letter-spacing:.03em}
+.role{color:#556;white-space:nowrap}
+.md{text-align:right;font-variant-numeric:tabular-nums;width:42px}
+.dates{color:#556;white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
+.tilde{color:#c3c9d0;margin:0 3px}
+.badge{padding:2px 8px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.todayline,.targetline{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed #f59e0b;z-index:3}
+.targetline{border-left:1px solid var(--crit)}
+/* gantt legend — slim, lives in the toolbar next to zoom */
+.glegend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-right:auto;color:var(--sub);font-size:12px}
+.glegend .k{display:inline-flex;align-items:center;gap:5px}
+.glegend .swatch{width:14px;height:9px;border-radius:3px;display:inline-block;border:1px solid #e3e6e9}
+.lsw{display:inline-block;width:0;height:13px;vertical-align:middle}
+.lsw.today{border-left:2px dashed #f59e0b}
+.lsw.target{border-left:2px solid var(--crit)}
+.mm-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mm-card{background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.mm-card h3{margin:0 0 10px;font-size:14px}
+.mmt{width:100%;border-collapse:collapse;font-size:13px}
+.mmt td{padding:6px 6px;border-bottom:1px solid #f0f1f3}
+.mmt td.num{text-align:right;font-variant-numeric:tabular-nums;width:52px}
+.mmbar{background:#eef0f2;border-radius:4px;height:8px;overflow:hidden;min-width:80px}
+.mmbar>div{height:100%}
+.mm-total{margin-top:12px;font-size:13px;color:#556}.mm-total b{color:var(--ink);font-size:18px}
+.cpwrap{display:flex;flex-wrap:wrap;gap:6px}
+.cpchip{background:#fff5f5;border:1px solid #f3c9c9;color:#7f1d1d;padding:5px 10px;border-radius:6px;font-size:13px}
+.cparrow{color:#dc2626;align-self:center}
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(20,25,32,.44);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:520px;box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.modal.wide{max-width:620px}
+.modal h2{font-size:18px;margin:0;padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modal .x{cursor:pointer;color:#9aa2ab;font-size:20px;line-height:1}
+.mbody{padding:16px 18px;max-height:66vh;overflow:auto}
+.mfoot{padding:13px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:#556;margin-bottom:4px;font-weight:600}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.depbox{border:1px solid var(--line);border-radius:8px;padding:8px;max-height:130px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.depbox label{font-size:13px;color:#334;font-weight:400;display:flex;gap:6px;align-items:center;margin:0}
+.err{color:#c0392b;font-size:13px;margin-top:2px;min-height:14px}
+.hrow{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.hrow input{flex:1}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hchip{background:var(--holi);border:1px solid #f3c9c9;border-radius:6px;padding:3px 8px;font-size:13px;display:inline-flex;gap:6px;align-items:center}
+.hchip b{font-weight:600}.hchip .del{cursor:pointer;color:#c0392b}
+.sect{font-size:13px;font-weight:700;margin:16px 0 8px;color:#334;border-top:1px solid #eef0f2;padding-top:12px}
+.sect:first-child{border-top:0;margin-top:0;padding-top:0}
+.phrow{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.phrow input[type=text]{flex:1}
+.phrow input[type=color]{width:38px;height:32px;padding:2px;border-radius:8px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1c2126;color:#fff;padding:9px 16px;border-radius:8px;font-size:14px;z-index:80;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+@media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.mm-grid{grid-template-columns:1fr}.gantt-col{display:none}.appnav{display:none}}
+/* ===== app shell header ===== */
+.appbar{display:flex;align-items:center;gap:18px;background:#ffffff;border:1px solid var(--line);border-radius:14px;padding:11px 16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(20,25,32,.04)}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-name{font-size:18px;font-weight:750;letter-spacing:-.01em}
+.brand-sub{font-size:12px;color:#9aa2ab;background:#f1f3f5;border-radius:5px;padding:2px 6px;font-weight:600}
+.appnav{display:flex;gap:2px}
+.appnav a{font-size:14px;color:#6b7280;padding:6px 11px;border-radius:8px;cursor:pointer;user-select:none}
+.appnav a.on{color:var(--ink);background:#f2f4f7;font-weight:650}
+.appnav a:hover{background:#f6f7f9}
+.appctl{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rolefilter{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;font-size:14px;color:#334;font-family:inherit;cursor:pointer}
+.pagehd{margin-bottom:6px}
+/* ===== numbered phase header ===== */
+.phase-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;border:1px solid;border-radius:7px;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;margin-right:9px;vertical-align:middle;background:#fff}
+.phase-name{font-weight:700;font-size:14px;vertical-align:middle}
+/* ===== role avatar ===== */
+.avatar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;flex:none;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.rolechip{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.rolechip>span:last-child{color:#4b5563}
+/* ===== list view ===== */
+.listtbl th,.listtbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:middle}
+.listtbl thead th{background:#f3f4f6;font-family:var(--mono);letter-spacing:.04em;font-size:12px;color:var(--sub);font-weight:600}
+.phase-tag{padding:2px 9px;border-radius:20px;font-size:12px;font-weight:650;white-space:nowrap}
+.prtxt{font-size:12px;color:#889;margin-left:2px;font-variant-numeric:tabular-nums}
+/* ===== kanban view ===== */
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kcol{background:#eef0f3;border:1px solid var(--line);border-radius:12px;padding:10px;min-height:120px}
+.kcol-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;padding:0 2px}
+.kcol-n{font-size:12px;color:#889;font-weight:700}
+.kcol-body{display:flex;flex-direction:column;gap:8px}
+.kcard{background:#ffffff;border:1px solid var(--line);border-radius:9px;padding:9px 11px;box-shadow:0 1px 2px rgba(20,25,32,.05)}
+.kc-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.kc-wbs{font-size:12px;color:#9aa2ab;font-weight:700;font-variant-numeric:tabular-nums}
+.kc-name{font-size:14px;font-weight:650;line-height:1.35;margin-bottom:8px}
+.kc-foot{display:flex;align-items:center;justify-content:space-between}
+.kc-md{font-size:12px;color:#6b7280;font-weight:600}
+.kempty{color:#c3c9d0;font-size:13px;text-align:center;padding:10px 0}
+@media(max-width:860px){.kanban{grid-template-columns:1fr 1fr}}
+
+/* ============ Liquid Glass layer ============ */
+:root{--glass:rgba(255,255,255,.5);--glass-2:rgba(255,255,255,.6);--gbrd:rgba(255,255,255,.7);--gdiv:rgba(140,150,180,.16);--gshadow:0 10px 30px rgba(45,50,60,.09);--gblur:saturate(140%) blur(20px)}
+html{background:#f3f5f8}
+body{color:var(--ink);background:
+  radial-gradient(1200px 720px at 50% -12%, rgba(130,145,170,.05), transparent 62%),
+  linear-gradient(180deg,#fbfcfd 0%,#f2f4f7 100%);
+  background-attachment:fixed}
+/* floating frosted panels (with blur) */
+.appbar,.anchor,.mm-card,.kcol,.kcard,.modal,.edittoolbar.on,.tab,.btn,.wtoggle,.rolefilter,.zoomseg{
+  -webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+.appbar,.anchor,.mm-card,.kcol,.modal{background:var(--glass);border:1px solid var(--gbrd);border-radius:18px;
+  box-shadow:var(--gshadow),inset 0 1px 0 rgba(255,255,255,.6)}
+/* GNB: de-boxed → floating frosted sticky bar */
+.appbar{position:sticky;top:10px;z-index:30;border-radius:16px}
+.brand-sub{background:var(--glass-2);color:#5b6470}
+.appnav a.on{background:rgba(120,128,140,.16)}
+/* controls */
+.tab,.btn,.wtoggle,.rolefilter{background:var(--glass-2);border:1px solid var(--gbrd);box-shadow:0 2px 8px rgba(30,42,90,.06)}
+.tab.on{background:var(--ink);color:#fff;border-color:transparent}
+.btn.primary{background:var(--acc);color:#fff;border-color:transparent}
+.btn.danger{background:var(--glass-2)}
+.zoomseg{background:var(--glass-2);border:1px solid var(--gbrd)}
+.zoomseg button{background:transparent}
+.zoomseg button.on{background:var(--ink);color:#fff}
+.kcard{background:var(--glass-2);border:1px solid var(--gbrd);box-shadow:0 4px 14px rgba(30,42,90,.07)}
+/* table containers: glass frame, no blur (keeps sticky-scroll crisp) */
+.card{background:var(--glass);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
+.strip{background:var(--gdiv);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
+.cell{background:rgba(255,255,255,.46);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+/* dense table: transparent rows show frosted card; frozen cells stay near-opaque so timeline hides on scroll */
+.gtbl thead th{background:rgba(246,248,252,.72)}
+.gtbl th:nth-child(1),.gtbl td.wbs{background:rgba(250,251,253,.94)}
+.gtbl th:nth-child(2),.gtbl td.tname{background:rgba(250,251,253,.94)}
+.gtbl thead th:nth-child(1),.gtbl thead th:nth-child(2){background:rgba(246,248,252,.94)}
+.gtbl .phase-row td{background:rgba(238,242,249,.82)}
+.gtbl .phase-num{background:rgba(255,255,255,.7)}
+/* modal: higher opacity for form legibility over the dark scrim */
+.modal{background:rgba(255,255,255,.82)}
+.modal h2,.mfoot{border-color:var(--gdiv)}
+.field input,.field select,.field textarea{background:rgba(255,255,255,.7);border-color:var(--gbrd)}
+.depbox{background:var(--glass-2);border-color:var(--gbrd)}
+.sect{border-top-color:var(--gdiv)}
+.hchip{background:var(--glass-2);border-color:var(--gbrd);color:var(--ink)}
+.hchip .del{color:var(--crit)}
+
+/* ============ spacing rhythm (generous, 4/8 scale) ============ */
+.wrap{padding:32px 44px 88px}
+.appbar{gap:22px;padding:13px 22px;margin-bottom:24px}
+.pagehd{margin-bottom:10px}
+.assump{margin:14px 0 24px}
+.kpis{margin-bottom:24px}
+.anchor{padding:28px 32px;gap:44px}
+.strip{margin-top:16px}
+.cell{padding:20px 22px}
+.cell .l{margin-bottom:8px}
+.ctrlbar{gap:16px;margin-bottom:22px}
+.tabs{gap:6px}
+.tab{padding:11px 19px}
+.edittoolbar.on{gap:10px;padding:13px 16px;margin-bottom:22px}
+.gantt-toolbar{flex-wrap:wrap;gap:12px 16px}
+/* dense tables: a touch more air, still compact; bars re-centered for taller rows */
+.gtbl th,.gtbl td{padding:12px 14px}
+.listtbl th,.listtbl td{padding:12px 14px}
+.phase-row td{padding:12px 14px}
+.bar{top:50%;height:15px;transform:translateY(-50%)}
+.mm-grid{gap:20px}
+.mm-card{padding:22px 24px}
+.mm-card h3{margin:0 0 14px}
+.kanban{gap:16px}
+.kcol{padding:14px;min-height:140px}
+.kcol-hd{margin-bottom:12px;padding:0 4px}
+.kcol-body{gap:10px}
+.kcard{padding:12px 14px}
+.kc-name{margin-bottom:10px}
+.modal h2{padding:18px 22px}
+.mbody{padding:22px}
+.mfoot{padding:16px 22px}
+.field{margin-bottom:16px}
+.sect{margin:20px 0 10px;padding-top:16px}
+
+/* ============ modal polish — match base page (15px · glass · focus) ============ */
+.overlay{padding:56px 16px;background:rgba(20,25,32,.4);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.modal{max-width:560px;box-shadow:0 24px 60px rgba(20,25,32,.22)}
+.modal.wide{max-width:660px}
+.modal h2{font-size:19px;font-weight:750;letter-spacing:-.01em}
+.modal .x{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;font-size:20px;color:var(--sub);transition:.12s}
+.modal .x:hover{background:rgba(120,128,140,.14);color:var(--ink)}
+.field label{font-size:13px;color:var(--sub);font-weight:600;margin-bottom:7px}
+/* all text-like inputs across task + settings modals, uniform */
+.mbody input:not([type=checkbox]):not([type=color]),.mbody select,.mbody textarea{width:100%;font-size:15px;padding:11px 13px;border-radius:10px;border:1px solid var(--gbrd);background:rgba(255,255,255,.72);font-family:inherit;transition:border-color .12s,box-shadow .12s}
+.mbody input:not([type=checkbox]):not([type=color]):focus,.mbody select:focus,.mbody textarea:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px rgba(78,203,106,.22)}
+.hrow input{flex:1}
+.row2,.row3{gap:14px}
+.depbox{padding:12px;gap:8px 14px;border-radius:10px}
+.depbox label{font-size:14px;font-weight:400}
+.phrow input[type=color]{width:46px;height:42px;padding:3px;border-radius:10px;flex:none}
+.err{font-size:12.5px}
+.mfoot{gap:10px}
+.mfoot .btn{padding:10px 16px;font-size:14px}
+/* solid white modal (no glass see-through) */
+.modal{background:#fff}
+.mbody input:not([type=checkbox]):not([type=color]),.mbody select,.mbody textarea{background:#fff;border-color:var(--line)}
+/* precedent-task picker: left-aligned clickable rows, checkbox top-aligned */
+.depbox{background:#f6f7f9;border:1px solid var(--line);max-height:184px;gap:2px;padding:8px}
+.depbox label{display:flex;align-items:flex-start;gap:9px;margin:0;padding:8px 10px;border-radius:8px;font-size:14px;font-weight:400;color:#334;line-height:1.35;cursor:pointer}
+.depbox label:hover{background:#fff}
+.depbox input[type=checkbox]{flex:none;width:16px;height:16px;margin:1px 0 0;accent-color:var(--acc);cursor:pointer}
+.depbox span{flex:1}
+.depbox b{font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums;margin-right:3px}
+/* collapse empty error slots so field rhythm stays even */
+.err:empty{display:none}
+/* custom select chevron + guaranteed right room (native arrow had no padding) */
+.mbody select,.rolefilter{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;background-size:16px;padding-right:40px}
+.mbody select{background-color:#fff}
+/* no nested scroll — deps list flows, only the modal body scrolls */
+.depbox{max-height:none;overflow:visible}
+/* settings modal balance: holiday add-row, chips, phase rows */
+.hrow{gap:8px;margin-bottom:8px}
+.hrow input[type=date]{flex:0 1 190px}
+.hrow .btn{padding:11px 16px;font-size:14px}
+.chiprow{gap:8px;margin-top:10px}
+.hchip{padding:6px 10px;font-size:13px;border-radius:8px}
+.hchip .del{font-size:15px;line-height:1}
+.phrow{gap:10px;margin-bottom:10px}
+/* holiday chips need a visible surface on the now-solid white modal */
+.hchip{background:#f3f4f6;border:1px solid var(--line);color:var(--ink)}
+.phrow input[type=color]{border:1px solid var(--line);cursor:pointer}
+/* inline 담당 edit from the schedule table */
+.role[data-roleedit]{cursor:pointer;border-radius:6px}
+.role[data-roleedit]:hover{background:rgba(120,128,140,.09)}
+.asg{color:var(--sub);font-size:12px;margin-left:7px;font-weight:500}
+.kc-asg{color:var(--sub);font-size:11px;margin-top:4px}
+/* inline 파트·담당자 popover */
+.rolepop{position:absolute;z-index:60;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(20,25,32,.2);padding:12px}
+.rolepop .rp-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rolepop .rp-lab{font-size:12px;color:var(--sub);font-weight:600;margin-bottom:6px}
+.rolepop .rp-row .rp-lab{margin:0;flex:none;width:34px}
+.rolepop .rp-part{flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-family:inherit;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:15px;padding-right:34px}
+.rolepop .rp-people{max-height:180px;overflow:auto;display:flex;flex-direction:column;gap:1px;margin-bottom:8px}
+.rolepop .rp-people label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;font-size:14px;cursor:pointer}
+.rolepop .rp-people label:hover{background:#f3f4f6}
+.rolepop .rp-people input{width:16px;height:16px;accent-color:var(--acc);cursor:pointer;flex:none}
+.rolepop .rp-empty{color:var(--sub);font-size:13px;padding:6px 8px}
+.rolepop .rp-add{display:flex;gap:6px;margin-bottom:10px}
+.rolepop .rp-newname{flex:1;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit}
+.rolepop .rp-foot{display:flex;justify-content:flex-end}
+.rolesel{font-size:13px;font-family:inherit;color:var(--ink);padding:5px 26px 5px 9px;border:1px solid var(--acc);border-radius:8px;background-color:#fff;box-shadow:0 0 0 3px rgba(78,203,106,.2);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px}
+</style></head>
+<body><div class="wrap">
+<header class="appbar">
+  <div class="brand"><span class="brand-name">일정관리자</span><span class="brand-sub">02 · pxd</span></div>
+  <nav class="appnav"><a class="on">프로젝트</a></nav>
+  <div class="appctl">
+    <select class="rolefilter" id="roleFilter"><option value="">전체 담당</option></select>
+    <div class="wtoggle"><span class="lab">주말 근무 <b id="wstate">OFF</b></span><div class="sw" id="wsw"></div></div>
+    <button class="btn" id="editBtn">편집 모드</button>
+  </div>
+</header>
+<div class="pagehd">
+  <h1>일정관리 시스템 구축 · 프로젝트 일정 <span class="editmode-badge" id="emBadge">편집 모드</span></h1>
+  <div class="sub">02. 일정관리자 · pxd &nbsp;|&nbsp; 마지막 편집 <span id="lastEdit">2026-07-15 17:10</span></div>
+</div>
+<div class="assump" id="assump"></div>
+<div class="kpis" id="kpis"></div>
+
+<div class="ctrlbar">
+  <div class="tabs">
+    <div class="tab on" data-p="gantt">WBS · 간트</div>
+    <div class="tab" data-p="list">목록</div>
+    <div class="tab" data-p="kanban">칸반</div>
+    <div class="tab" data-p="mm">M/M 집계</div>
+    <div class="tab" data-p="cp">크리티컬 패스</div>
+  </div>
+</div>
+
+<div class="edittoolbar" id="editToolbar">
+  <span class="tt">관리자 편집</span>
+  <button class="btn small primary" id="addTaskBtn">태스크 추가</button>
+  <button class="btn small" id="settingsBtn">설정</button>
+  <button class="btn small" id="undoBtn">되돌리기</button>
+  <button class="btn small" id="exportBtn">내보내기(JSON)</button>
+  <button class="btn small" id="importBtn">가져오기</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none">
+</div>
+
+<div class="panel on" id="p-gantt">
+<div class="gantt-toolbar">
+  <div class="glegend">
+    <span class="k"><span class="swatch" style="background:#cfd6de"></span>완료</span>
+    <span class="k"><span class="swatch" style="background:#2563eb;box-shadow:0 0 0 1px #dc2626"></span>CP</span>
+    <span class="k"><span class="swatch" style="background:var(--holi)"></span>주말·공휴일</span>
+    <span class="k"><span class="lsw today"></span>오늘</span>
+    <span class="k"><span class="lsw target"></span>목표 오픈</span>
+  </div>
+  <span class="gtt-lab">타임라인 보기</span>
+  <div class="zoomseg" id="zoomseg">
+    <button data-z="fit" class="on">주</button>
+    <button data-z="day">일</button>
+    <button data-z="month">월</button>
+  </div>
+</div>
+<div class="card">
+<div class="gscroll" id="gscroll">
+<table class="gtbl">
+<thead><tr><th>WBS</th><th>태스크<button class="foldtog" id="foldBtn" title="담당·MD·기간·상태 접기">‹</button></th><th>담당</th><th>MD</th><th>기간(역산)</th><th>상태</th>
+<th class="gantt-col"><div class="gantt-head" id="ghead"></div></th></tr></thead>
+<tbody id="gbody"></tbody>
+</table>
+</div>
+</div></div>
+
+<div class="panel" id="p-mm">
+<div class="mm-grid">
+  <div class="mm-card"><h3>단계별 M/M</h3><table class="mmt" id="mmphase"></table><div class="mm-total">합계 <b id="mmtot"></b></div></div>
+  <div class="mm-card"><h3>역할별 M/M</h3><table class="mmt" id="mmrole"></table><div class="mm-total" id="mmrolenote"></div></div>
+</div></div>
+
+<div class="panel" id="p-cp">
+<div class="card" style="padding:16px 18px">
+<h3 style="margin:0 0 8px;font-size:14px">크리티컬 패스 <span id="cpcount" style="color:var(--sub);font-weight:500"></span></h3>
+<p style="color:#556;margin:0 0 12px">여유(slack)가 가장 적은 최장 경로입니다. 이 체인이 하루 밀리면 목표 오픈일도 하루 밀립니다.</p>
+<div class="cpwrap" id="cpwrap"></div>
+</div></div>
+
+<div class="panel" id="p-list">
+<div class="card">
+<table class="gtbl listtbl">
+<thead><tr><th>WBS</th><th>태스크</th><th>담당</th><th>단계</th><th>MD</th><th>기간(역산)</th><th>상태</th><th>진행</th></tr></thead>
+<tbody id="listbody"></tbody>
+</table>
+</div></div>
+
+<div class="panel" id="p-kanban">
+<div class="kanban" id="kanban"></div>
+</div>
+</div>
+
+<!-- 태스크 모달 -->
+<div class="overlay" id="taskOverlay"><div class="modal">
+  <h2><span id="taskTitle">태스크 추가</span><span class="x" data-close>×</span></h2>
+  <div class="mbody">
+    <div class="row2">
+      <div class="field"><label>WBS ID</label><input id="fId" placeholder="예: 3.5"><div class="err" id="errId"></div></div>
+      <div class="field"><label>단계</label><select id="fPhase"></select></div>
+    </div>
+    <div class="field"><label>태스크명</label><input id="fName"><div class="err" id="errName"></div></div>
+    <div class="row3">
+      <div class="field"><label>담당</label><select id="fRole"></select></div>
+      <div class="field"><label>공수 (MD)</label><input id="fMd" type="number" min="1" step="1"><div class="err" id="errMd"></div></div>
+      <div class="field"><label>소요 (근무일)</label><input id="fDur" type="number" min="1" step="1"><div class="err" id="errDur"></div></div>
+    </div>
+    <div class="field"><label>상태</label><select id="fStatus"></select></div>
+    <div class="field"><label>담당자</label><div class="depbox" id="fAsg"></div></div>
+    <div class="field"><label>선행 태스크 (의존)</label><div class="depbox" id="fDeps"></div><div class="err" id="errDeps"></div></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn danger" id="taskDelete">삭제</button>
+    <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="taskSave">저장</button></div>
+  </div>
+</div></div>
+
+<!-- 설정 모달 -->
+<div class="overlay" id="setOverlay"><div class="modal wide">
+  <h2><span>프로젝트 설정</span><span class="x" data-close>×</span></h2>
+  <div class="mbody">
+    <div class="sect">프로젝트</div>
+    <div class="field"><label>프로젝트명</label><input id="sProj"></div>
+    <div class="row3">
+      <div class="field"><label>기준일(오늘)</label><input id="sToday" type="date"></div>
+      <div class="field"><label>버퍼 (근무일)</label><input id="sBuffer" type="number" min="0" step="1"></div>
+      <div class="field"><label>1 M/M = ? 인일</label><input id="sMdmm" type="number" min="1" step="1"></div>
+    </div>
+    <div class="sect">파트 (역할)</div>
+    <div class="hrow"><input id="rName" placeholder="파트·역할명 (예: UX, FE, 디자인)"><button class="btn small" id="rAdd">추가</button></div>
+    <div class="chiprow" id="rChips"></div>
+    <div class="sect">인력 (담당자)</div>
+    <div class="hrow"><input id="pName" placeholder="담당자 이름 (예: 홍길동)"><button class="btn small" id="pAdd">추가</button></div>
+    <div class="chiprow" id="pChips"></div>
+    <div class="sect">공휴일</div>
+    <div class="hrow"><input id="hDate" type="date"><input id="hName" placeholder="공휴일명"><button class="btn small" id="hAdd">추가</button></div>
+    <div class="chiprow" id="hChips"></div>
+    <div class="sect">단계 (이름·색상)</div>
+    <div id="phList"></div>
+  </div>
+  <div class="mfoot"><span style="font-size:12px;color:#9aa2ab">변경 시 전체 일정·M/M 재계산</span>
+    <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="setSave">저장</button></div>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script id="wbs-model" type="application/json">{"settings": {"project": "일정관리 시스템 구축", "today": "2026-07-15", "md_per_mm": 20, "buffer_wd": 5, "weekend_default": "off"}, "statuses": ["예정", "진행중", "완료", "보류", "취소"], "roles": ["기획/PM", "UX", "UI", "퍼블", "FE", "BE", "FE/BE", "QA", "기획/QA", "전체"], "phases": [{"id": "1", "name": "준비·기획", "color": "#6b7280"}, {"id": "2", "name": "UX 설계", "color": "#0ea5e9"}, {"id": "3", "name": "UI 디자인", "color": "#8b5cf6"}, {"id": "4", "name": "퍼블·프론트", "color": "#2563eb"}, {"id": "5", "name": "백엔드·데이터", "color": "#0d9488"}, {"id": "6", "name": "통합·QA", "color": "#d97706"}, {"id": "7", "name": "오픈·안정화", "color": "#16a34a"}], "holidays": [{"date": "2026-08-15", "name": "광복절"}, {"date": "2026-08-17", "name": "광복절 대체"}, {"date": "2026-09-24", "name": "추석연휴"}, {"date": "2026-09-25", "name": "추석"}, {"date": "2026-09-26", "name": "추석연휴"}, {"date": "2026-10-03", "name": "개천절"}, {"date": "2026-10-05", "name": "개천절 대체"}, {"date": "2026-10-09", "name": "한글날"}], "tasks": [{"id": "1.1", "name": "킥오프 & 요구사항 정의", "phase": "1", "role": "기획/PM", "md": 3, "dur": 2, "deps": [], "status": "완료"}, {"id": "1.2", "name": "필요항목·데이터 정의(기획서)", "phase": "1", "role": "기획/PM", "md": 4, "dur": 3, "deps": ["1.1"], "status": "완료"}, {"id": "1.3", "name": "벤치마킹·데스크리서치", "phase": "1", "role": "UX", "md": 4, "dur": 3, "deps": ["1.1"], "status": "완료"}, {"id": "2.1", "name": "IA & 유저플로우", "phase": "2", "role": "UX", "md": 4, "dur": 3, "deps": ["1.2", "1.3"], "status": "완료"}, {"id": "2.2", "name": "화면설계(와이어프레임)", "phase": "2", "role": "UX", "md": 8, "dur": 5, "deps": ["2.1"], "status": "완료"}, {"id": "2.3", "name": "프로토타입 & 사용성 점검", "phase": "2", "role": "UX", "md": 5, "dur": 3, "deps": ["2.2"], "status": "완료"}, {"id": "3.1", "name": "디자인 컨셉·무드", "phase": "3", "role": "UI", "md": 3, "dur": 2, "deps": ["2.2", "2.3"], "status": "진행중"}, {"id": "3.2", "name": "디자인 시스템(컴포넌트·토큰)", "phase": "3", "role": "UI", "md": 6, "dur": 4, "deps": ["3.1"], "status": "예정"}, {"id": "3.3", "name": "본 화면 UI 디자인", "phase": "3", "role": "UI", "md": 10, "dur": 6, "deps": ["3.2"], "status": "예정"}, {"id": "3.4", "name": "디자인 QA·핸드오프", "phase": "3", "role": "UI", "md": 3, "dur": 2, "deps": ["3.3"], "status": "예정"}, {"id": "4.1", "name": "마크업·스타일 퍼블리싱", "phase": "4", "role": "퍼블", "md": 8, "dur": 5, "deps": ["3.4"], "status": "예정"}, {"id": "4.2", "name": "프론트 기능개발(캘린더·목록·등록)", "phase": "4", "role": "FE", "md": 12, "dur": 7, "deps": ["4.1"], "status": "예정"}, {"id": "4.3", "name": "상태관리·유효성", "phase": "4", "role": "FE", "md": 5, "dur": 3, "deps": ["4.2"], "status": "예정"}, {"id": "5.1", "name": "데이터 모델·DB 설계", "phase": "5", "role": "BE", "md": 4, "dur": 3, "deps": ["2.1"], "status": "예정"}, {"id": "5.2", "name": "API 개발(CRUD·일정)", "phase": "5", "role": "BE", "md": 10, "dur": 6, "deps": ["5.1", "3.4"], "status": "예정"}, {"id": "5.3", "name": "알림·반복일정 로직", "phase": "5", "role": "BE", "md": 6, "dur": 4, "deps": ["5.2"], "status": "예정"}, {"id": "5.4", "name": "인증·권한", "phase": "5", "role": "BE", "md": 5, "dur": 3, "deps": ["5.2"], "status": "예정"}, {"id": "6.1", "name": "FE/BE 통합", "phase": "6", "role": "FE/BE", "md": 5, "dur": 3, "deps": ["4.3", "5.3", "5.4"], "status": "예정"}, {"id": "6.2", "name": "통합 QA·버그픽스", "phase": "6", "role": "QA", "md": 8, "dur": 5, "deps": ["6.1"], "status": "예정"}, {"id": "6.3", "name": "UAT(사용자 검수)", "phase": "6", "role": "기획/QA", "md": 4, "dur": 3, "deps": ["6.2"], "status": "예정"}, {"id": "7.1", "name": "배포 준비·릴리즈", "phase": "7", "role": "BE", "md": 3, "dur": 2, "deps": ["6.3"], "status": "예정"}, {"id": "7.2", "name": "오픈 & 안정화 모니터링", "phase": "7", "role": "전체", "md": 4, "dur": 3, "deps": ["7.1"], "status": "예정"}]}</script>
+<script>
+let MODEL=JSON.parse(document.getElementById('wbs-model').textContent);
+MODEL.people=MODEL.people||[];                          // 전역 인력(담당자) 풀
+MODEL.tasks.forEach(t=>{t.assignees=t.assignees||[];}); // 태스크별 담당자 이름 배열
+const SB={"완료":["#e7f6ec","#1a7f37"],"진행중":["#e7f0fd","#1a56db"],"예정":["#eef0f2","#5b6470"],"보류":["#f1f2f4","#6b7280"],"취소":["#fdeaea","#c0392b"]};
+let mode="off", editMode=false, editingId=null, roleFilter="", zoom="fit";
+const undoStack=[];
+
+// ---------- view helpers (visual layer only) ----------
+const roleInitial=r=>(r||"?").trim().charAt(0);
+const roleColor=r=>{let h=0;for(let i=0;i<(r||"").length;i++)h=(h*31+r.charCodeAt(i))%360;return "hsl("+h+",50%,44%)";};
+const avatar=r=>'<span class="avatar" style="background:'+roleColor(r)+'" title="'+esc(r)+'">'+esc(roleInitial(r))+'</span>';
+const roleCell=r=>'<span class="rolechip">'+avatar(r)+'<span>'+esc(r)+'</span></span>';
+const asgHtml=t=>{const a=t.assignees||[];return a.length?'<span class="asg">'+esc(a.join(', '))+'</span>':'';};
+const progOf=s=>s==="완료"?100:(s==="진행중"?50:0);
+const visTasks=()=>MODEL.tasks.filter(t=>!roleFilter||t.role===roleFilter);
+function populateRoleFilter(){
+  const sel=document.getElementById('roleFilter');const roles=[...new Set(MODEL.tasks.map(t=>t.role))];
+  if(roleFilter&&roles.indexOf(roleFilter)<0)roleFilter="";
+  sel.innerHTML='<option value="">전체 담당</option>'+roles.map(r=>'<option value="'+esc(r)+'"'+(r===roleFilter?' selected':'')+'>'+esc(r)+'</option>').join('');
+}
+
+// ---------- date utils ----------
+const pad=n=>String(n).padStart(2,"0");
+const D=s=>{const[y,m,dd]=s.split("-").map(Number);return new Date(y,m-1,dd);};
+const iso=dt=>dt.getFullYear()+"-"+pad(dt.getMonth()+1)+"-"+pad(dt.getDate());
+const addDays=(dt,n)=>{const x=new Date(dt);x.setDate(x.getDate()+n);return x;};
+const maxD=a=>new Date(Math.max.apply(null,a.map(x=>+x)));
+const minD=a=>new Date(Math.min.apply(null,a.map(x=>+x)));
+const dayn=(a,b)=>Math.round((b-a)/86400000);
+const esc=s=>(s+"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const phaseMap=()=>{const m={};MODEL.phases.forEach(p=>m[p.id]=p);return m;};
+
+// ---------- engine (wbs_calc.py 이식) ----------
+function compute(md){
+  const hol=new Set(MODEL.holidays.map(h=>h.date));
+  const today=D(MODEL.settings.today);
+  const isWork=dt=>{if(hol.has(iso(dt)))return false;if(md==="off"&&(dt.getDay()===0||dt.getDay()===6))return false;return true;};
+  const addWd=(dt,n)=>{let s=n>=0?1:-1,c=0,x=new Date(dt);while(c<Math.abs(n)){x=addDays(x,s);if(isWork(x))c++;}return x;};
+  const normF=dt=>{let x=new Date(dt);while(!isWork(x))x=addDays(x,1);return x;};
+  const normB=dt=>{let x=new Date(dt);while(!isWork(x))x=addDays(x,-1);return x;};
+  const wdBetween=(a,b)=>{if(b<a)return 0;let c=0,x=new Date(a);while(x<=b){if(isWork(x))c++;x=addDays(x,1);}return c;};
+  const tasks=MODEL.tasks, byId={}; tasks.forEach(t=>byId[t.id]=t);
+  const succ={}; tasks.forEach(t=>succ[t.id]=[]);
+  tasks.forEach(t=>t.deps.forEach(dp=>{if(succ[dp])succ[dp].push(t.id);}));
+  const order=[],seen={};
+  const vis=n=>{if(seen[n]||!byId[n])return;byId[n].deps.forEach(vis);seen[n]=1;order.push(n);};
+  tasks.forEach(t=>vis(t.id));
+  const es={},ef={},doneAnchor=normB(addDays(today,-1));
+  order.forEach(n=>{const v=byId[n];
+    if(v.status==="완료"){es[n]=null;ef[n]=doneAnchor;return;}
+    const df=v.deps.map(dp=>ef[dp]).filter(Boolean);
+    let start=df.length?maxD([addWd(maxD(df),1),today]):today;
+    start=normF(start);es[n]=start;ef[n]=addWd(start,v.dur-1);});
+  const nonDone=tasks.filter(t=>t.status!=="완료");
+  const asap=nonDone.length?maxD(nonDone.map(t=>ef[t.id])):doneAnchor;
+  const target=addWd(asap,MODEL.settings.buffer_wd);
+  const ls={},lf={},end=normB(target);
+  order.slice().reverse().forEach(n=>{const v=byId[n];
+    let f=succ[n].length?addWd(minD(succ[n].map(s=>ls[s])),-1):end;
+    f=normB(f);lf[n]=f;ls[n]=addWd(f,-(v.dur-1));});
+  const st={};
+  tasks.forEach(t=>{const n=t.id;
+    if(t.status==="완료"){st[n]={es:null,ef:iso(ef[n]),ls:iso(ls[n]),lf:iso(lf[n]),slack:null,critical:false};}
+    else{let sl=ls[n]>=es[n]?wdBetween(es[n],ls[n])-1:0;st[n]={es:iso(es[n]),ef:iso(ef[n]),ls:iso(ls[n]),lf:iso(lf[n]),slack:Math.max(sl,0)};}});
+  const remSl=nonDone.map(t=>st[t.id].slack),mn=remSl.length?Math.min.apply(null,remSl):0,crit=[];
+  tasks.forEach(t=>{if(t.status!=="완료"){st[t.id].critical=(st[t.id].slack===mn);if(st[t.id].critical)crit.push(t.id);}});
+  return {target:iso(target),asap:iso(asap),dday:dayn(today,target),minSlack:mn,critical:crit,task:st};
+}
+function rollup(){
+  const ph={},rl={};let total=0,done=0;const mm=MODEL.settings.md_per_mm;
+  MODEL.tasks.forEach(t=>{ph[t.phase]=(ph[t.phase]||0)+t.md;rl[t.role]=(rl[t.role]||0)+t.md;total+=t.md;if(t.status==="완료")done+=t.md;});
+  const rnd=x=>Math.round(x/mm*100)/100;
+  return {ph,rl,total,done,remain:total-done,progress:total?Math.round(done/total*100):0,mm,rnd};
+}
+
+// ---------- render ----------
+function render(){
+  const sc=compute(mode), roll=rollup(), PM=phaseMap();
+  populateRoleFilter();
+  let attention=0;
+  MODEL.tasks.forEach(t=>{if(t.status==="보류")attention++;else if(t.status==="예정"&&sc.task[t.id].critical)attention++;});
+  document.getElementById('assump').innerHTML='<b>가정</b> · 목표 오픈 <b>'+sc.target+'</b> = ASAP '+sc.asap+' + 버퍼 '+MODEL.settings.buffer_wd+'일 · 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영';
+  const dTot=Math.max(sc.dday,1), dWork=Math.max(dayn(D(MODEL.settings.today),D(sc.asap)),0);
+  const wPct=Math.max(Math.min(dWork/dTot*100,100),2), bPct=Math.max(100-wPct,0);
+  document.getElementById('kpis').innerHTML=
+    '<div class="anchor">'+
+      '<div class="anchor-main"><div class="eyebrow">목표 오픈 · TARGET OPEN</div>'+
+        '<div class="anchor-date">'+sc.target+'</div>'+
+        '<div class="anchor-dday">D-'+sc.dday+'</div></div>'+
+      '<div class="runway"><div class="eyebrow">역산 런웨이 · 오늘 → 오픈</div>'+
+        '<div class="runway-bar"><div class="rw-work" style="width:'+wPct.toFixed(1)+'%"></div><div class="rw-buf" style="width:'+bPct.toFixed(1)+'%"></div></div>'+
+        '<div class="runway-legend"><i class="lg-work">착수 오늘 → <b>ASAP '+sc.asap+'</b></i><i class="lg-buf">버퍼 <b>'+MODEL.settings.buffer_wd+'</b> 근무일</i><span>여유(slack) <b>'+sc.minSlack+'</b>일</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="strip">'+
+      cell("총 공수",roll.rnd(roll.total)+'<small> M/M</small>',roll.total+" MD")+
+      cell("잔여 공수",roll.rnd(roll.remain)+'<small> M/M</small>',roll.remain+" MD")+
+      '<div class="cell"><div class="l">진행률</div><div class="v">'+roll.progress+'<small>%</small></div><div class="progress"><div style="width:'+roll.progress+'%"></div></div></div>'+
+      cell("크리티컬 패스",sc.critical.length+'<small> 개</small>',"여유 "+sc.minSlack+"일")+
+      '<div class="cell warn"><div class="l">주의 필요</div><div class="v">'+attention+'<small> 건</small></div><div class="d2">보류 · CP 예정</div></div>'+
+    '</div>';
+
+  let starts=[D(MODEL.settings.today)];
+  MODEL.tasks.forEach(t=>{const s=sc.task[t.id];if(s.es)starts.push(D(s.es));});
+  let tlStart=minD(starts); while(tlStart.getDay()!==1)tlStart=addDays(tlStart,-1);
+  let tlEnd=addDays(D(sc.target),2); const span=dayn(tlStart,tlEnd)+1;
+  const pct=dt=>dayn(tlStart,dt)/span*100;
+  const holByDate={};MODEL.holidays.forEach(h=>holByDate[h.date]=h.name);
+  let shades="";
+  for(let i=0;i<span;i++){const dt=addDays(tlStart,i),k=iso(dt);
+    if(holByDate[k])shades+='<div class="shade holi" style="left:'+(i/span*100)+'%;width:'+(1/span*100)+'%" title="'+esc(holByDate[k])+'"></div>';
+    else if((dt.getDay()===0||dt.getDay()===6)&&mode==="off")shades+='<div class="shade wend" style="left:'+(i/span*100)+'%;width:'+(1/span*100)+'%"></div>';}
+  const lines='<div class="todayline" style="left:'+pct(D(MODEL.settings.today))+'%"></div><div class="targetline" style="left:'+pct(D(sc.target))+'%"></div>';
+  // zoom: fit=화면맞춤(퍼센트) · day=하루28px · month=하루8px → 픽셀 폭으로 가로 스크롤
+  const perDay=zoom==="day"?28:(zoom==="month"?8:0);
+  const gtbl=document.querySelector('#p-gantt .gtbl');
+  if(perDay)gtbl.style.setProperty('--gcell',(span*perDay)+'px'); else gtbl.style.removeProperty('--gcell');
+  gtbl.classList.toggle('gday',zoom==="day");
+  let gh="";
+  if(zoom==="day"){for(let i=0;i<span;i++){const dt=addDays(tlStart,i),m1=dt.getDate()===1;
+    gh+='<div class="wk'+(m1?' mon':'')+'" style="left:'+((i+0.5)/span*100)+'%">'+(m1?(dt.getMonth()+1)+'월 ':'')+dt.getDate()+'</div>';}}
+  else if(zoom==="month"){for(let w=new Date(tlStart);w<=tlEnd;w=addDays(w,1))if(w.getDate()===1)gh+='<div class="wk mon" style="left:'+pct(w)+'%">'+w.getFullYear()+'.'+(w.getMonth()+1)+'</div>';}
+  else{for(let w=new Date(tlStart);w<=tlEnd;w=addDays(w,7))gh+='<div class="wk" style="left:'+pct(w)+'%">'+(w.getMonth()+1)+'/'+w.getDate()+'</div>';}
+  document.getElementById('ghead').innerHTML=gh;
+  // vertical hairline gridlines for structure (day view uses its own CSS gridlines)
+  let grid="";
+  if(zoom==="month"){for(let w=new Date(tlStart);w<=tlEnd;w=addDays(w,1))if(w.getDate()===1)grid+='<div class="wgrid" style="left:'+pct(w)+'%"></div>';}
+  else if(zoom!=="day"){for(let w=new Date(tlStart);w<=tlEnd;w=addDays(w,7))grid+='<div class="wgrid" style="left:'+pct(w)+'%"></div>';}
+
+  let rows="",cur=null;
+  visTasks().slice().sort(byWbs).forEach(t=>{
+    if(t.phase!==cur){cur=t.phase;const ph=PM[t.phase]||{name:t.phase,color:"#888",md:0};
+      const pmd=roll.ph[t.phase]||0;
+      rows+='<tr class="phase-row"><td colspan="6"><span class="phase-num" style="color:'+ph.color+';border-color:'+ph.color+'">'+("0"+t.phase).slice(-2)+'</span><span class="phase-name">'+esc(ph.name)+'</span> <span class="pmm">'+pmd+' MD · '+roll.rnd(pmd)+' M/M</span>'+(editMode?'<button class="btn small addtask" data-addphase="'+t.phase+'">태스크 추가</button>':'')+'</td><td class="gantt-cell">'+shades+grid+lines+'</td></tr>';}
+    const s=sc.task[t.id], done=t.status==="완료";
+    let bs=D(s.es||s.ls), be=D(done?s.lf:s.ef);
+    let left=pct(bs), width=Math.max((dayn(bs,be)+1)/span*100,1.2); if(left<0){width=Math.max(width+left,1.2);left=0;}
+    const col=done?"#cfd6de":(PM[t.phase]?PM[t.phase].color:"#888");
+    const bcls="bar"+(done?" done":(s.critical?" crit":""));
+    const sb=SB[t.status]||["#eee","#333"];
+    const dates=done?'<span style="color:#c3c9d0">—</span>':(s.es+'<span class="tilde">~</span>'+s.ef);
+    rows+='<tr class="'+(s.critical?"critrow":"")+'">'+
+      '<td class="wbs">'+t.id+'</td>'+
+      '<td class="tname editable" data-edit="'+t.id+'">'+esc(t.name)+(s.critical?' <span class="crittag">CP</span>':'')+'</td>'+
+      '<td class="role" data-roleedit="'+t.id+'" title="클릭해 담당·담당자 변경">'+roleCell(t.role)+asgHtml(t)+'</td><td class="md">'+t.md+'</td>'+
+      '<td class="dates">'+dates+'</td>'+
+      '<td><span class="badge" style="background:'+sb[0]+';color:'+sb[1]+'">'+t.status+'</span></td>'+
+      '<td class="gantt-cell">'+shades+grid+'<div class="'+bcls+'" style="left:'+left.toFixed(2)+'%;width:'+width.toFixed(2)+'%;background:'+col+'" title="'+t.id+' '+esc(t.name)+'"></div>'+lines+'</td></tr>';
+  });
+  document.getElementById('gbody').innerHTML=rows;
+
+  let pht="",maxr=Math.max.apply(null,Object.values(roll.rl));
+  MODEL.phases.forEach(p=>{const v=roll.ph[p.id]||0;
+    pht+='<tr><td><span class="pdot" style="background:'+p.color+'"></span>'+esc(p.name)+'</td><td class="num">'+v+'</td><td class="num">'+roll.rnd(v)+'</td><td><div class="mmbar"><div style="width:'+(roll.total?v/roll.total*100:0).toFixed(1)+'%;background:'+p.color+'"></div></div></td></tr>';});
+  document.getElementById('mmphase').innerHTML='<tr><td>단계</td><td class="num">MD</td><td class="num">M/M</td><td></td></tr>'+pht;
+  let rlt="";Object.keys(roll.rl).sort((a,b)=>roll.rl[b]-roll.rl[a]).forEach(r=>{const v=roll.rl[r];
+    rlt+='<tr><td>'+esc(r)+'</td><td class="num">'+v+'</td><td class="num">'+roll.rnd(v)+'</td><td><div class="mmbar"><div style="width:'+(v/maxr*100).toFixed(1)+'%;background:#334155"></div></div></td></tr>';});
+  document.getElementById('mmrole').innerHTML='<tr><td>역할</td><td class="num">MD</td><td class="num">M/M</td><td></td></tr>'+rlt;
+  document.getElementById('mmtot').innerHTML=roll.total+' MD = '+roll.rnd(roll.total)+' M/M';
+  document.getElementById('mmrolenote').innerHTML='완료 '+roll.rnd(roll.done)+' M/M ('+roll.progress+'%) · 잔여 <b>'+roll.rnd(roll.remain)+' M/M</b>';
+
+  document.getElementById('cpcount').textContent='('+sc.critical.length+'개 · 여유 '+sc.minSlack+'일)';
+  const nm={};MODEL.tasks.forEach(t=>nm[t.id]=t.name);
+  document.getElementById('cpwrap').innerHTML=sc.critical.map((c,i)=>'<span class="cpchip">'+c+' '+esc(nm[c])+'</span>'+(i<sc.critical.length-1?'<span class="cparrow">→</span>':'')).join('');
+
+  renderList(sc,roll,PM); renderKanban(sc,PM);
+
+  document.querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>openTask(el.getAttribute('data-edit')));
+  document.querySelectorAll('[data-roleedit]').forEach(td=>td.onclick=e=>{e.stopPropagation();inlineRole(td,td.getAttribute('data-roleedit'));});
+  if(editMode){
+    document.querySelectorAll('[data-addphase]').forEach(el=>el.onclick=()=>openTask(null,el.getAttribute('data-addphase')));
+  }
+}
+// inline 담당 편집 — 스케줄표에서 파트 + 담당자를 바로 세팅
+let popCleanup=null;
+function closePop(){const p=document.getElementById('rolepop');if(p)p.remove();if(popCleanup){document.removeEventListener('mousedown',popCleanup);popCleanup=null;}}
+function inlineRole(td,id){
+  const t=MODEL.tasks.find(x=>x.id===id); if(!t)return;
+  closePop();
+  const asg=new Set(t.assignees||[]);
+  const pop=document.createElement('div'); pop.className='rolepop'; pop.id='rolepop';
+  pop.innerHTML=
+    '<div class="rp-row"><span class="rp-lab">파트</span><select class="rp-part">'+MODEL.roles.map(r=>'<option'+(r===t.role?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select></div>'+
+    '<div class="rp-lab">담당자</div>'+
+    '<div class="rp-people">'+(MODEL.people.length?MODEL.people.map(p=>'<label><input type="checkbox" value="'+esc(p)+'"'+(asg.has(p)?' checked':'')+'>'+esc(p)+'</label>').join(''):'<div class="rp-empty">등록된 인력이 없습니다. 아래에서 추가하세요.</div>')+'</div>'+
+    '<div class="rp-add"><input class="rp-newname" placeholder="새 인력 이름"><button class="btn small rp-addbtn" type="button">추가</button></div>'+
+    '<div class="rp-foot"><button class="btn small primary rp-done" type="button">완료</button></div>';
+  document.body.appendChild(pop);
+  const r=td.getBoundingClientRect(), pw=Math.min(300,window.innerWidth-16);
+  pop.style.width=pw+'px';
+  pop.style.left=Math.min(window.scrollX+r.left, window.scrollX+window.innerWidth-pw-8)+'px';
+  pop.style.top=(window.scrollY+r.bottom+4)+'px';
+  const addBtn=pop.querySelector('.rp-addbtn'), nameInp=pop.querySelector('.rp-newname');
+  addBtn.onclick=()=>{const n=nameInp.value.trim();if(!n)return;if(MODEL.people.indexOf(n)<0)MODEL.people.push(n);
+    const wrap=pop.querySelector('.rp-people'),empty=wrap.querySelector('.rp-empty');if(empty)empty.remove();
+    const l=document.createElement('label');l.innerHTML='<input type="checkbox" value="'+esc(n)+'" checked>'+esc(n);wrap.appendChild(l);nameInp.value='';nameInp.focus();};
+  nameInp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addBtn.onclick();}};
+  function commit(){
+    const part=pop.querySelector('.rp-part').value;
+    const people=[...pop.querySelectorAll('.rp-people input:checked')].map(c=>c.value);
+    const changed=part!==t.role || people.join('')!==(t.assignees||[]).join('');
+    if(changed){snapshot();t.role=part;t.assignees=people;stampEdit();}
+    closePop(); if(changed){render();toast('담당 저장됨');}
+  }
+  pop.querySelector('.rp-done').onclick=commit;
+  popCleanup=e=>{if(!pop.contains(e.target))commit();};
+  setTimeout(()=>document.addEventListener('mousedown',popCleanup),0);
+}
+function cell(l,v,d2){return '<div class="cell"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d2">'+d2+'</div></div>';}
+function byWbs(a,b){const pa=a.id.split('.').map(Number),pb=b.id.split('.').map(Number);return pa[0]-pb[0]||(pa[1]||0)-(pb[1]||0);}
+
+// ---------- list view (visual layer; reuses engine output) ----------
+function renderList(sc,roll,PM){
+  const rows=visTasks().slice().sort(byWbs).map(t=>{
+    const s=sc.task[t.id], ph=PM[t.phase]||{name:t.phase,color:"#888"}, done=t.status==="완료";
+    const sb=SB[t.status]||["#eee","#333"], pr=progOf(t.status);
+    const dates=done?'<span style="color:#c3c9d0">—</span>':(s.es+'<span class="tilde">~</span>'+s.ef);
+    return '<tr>'+
+      '<td class="wbs">'+t.id+'</td>'+
+      '<td class="tname editable" data-edit="'+t.id+'">'+esc(t.name)+(s.critical?' <span class="crittag">CP</span>':'')+'</td>'+
+      '<td class="role" data-roleedit="'+t.id+'" title="클릭해 담당·담당자 변경">'+roleCell(t.role)+asgHtml(t)+'</td>'+
+      '<td><span class="phase-tag" style="background:'+ph.color+'1f;color:'+ph.color+'">'+esc(ph.name)+'</span></td>'+
+      '<td class="md">'+t.md+'</td>'+
+      '<td class="dates">'+dates+'</td>'+
+      '<td><span class="badge" style="background:'+sb[0]+';color:'+sb[1]+'">'+t.status+'</span></td>'+
+      '<td style="min-width:96px"><div class="progress"><div style="width:'+pr+'%"></div></div><span class="prtxt">'+pr+'%</span></td>'+
+    '</tr>';
+  }).join('');
+  document.getElementById('listbody').innerHTML=rows||'<tr><td colspan="8" style="padding:16px;color:#889">해당 담당의 태스크가 없습니다.</td></tr>';
+}
+// ---------- kanban view ----------
+function renderKanban(sc,PM){
+  const cols=MODEL.statuses.map(st=>{
+    const items=visTasks().filter(t=>t.status===st).sort(byWbs);
+    const sb=SB[st]||["#eee","#333"];
+    const cards=items.map(t=>{const ph=PM[t.phase]||{name:t.phase,color:"#888"}, s=sc.task[t.id];
+      return '<div class="kcard">'+
+        '<div class="kc-top"><span class="kc-wbs">'+t.id+'</span>'+(s.critical?'<span class="crittag">CP</span>':'')+'</div>'+
+        '<div class="kc-name">'+esc(t.name)+'</div>'+
+        '<div class="kc-foot">'+roleCell(t.role)+'<span class="kc-md">'+t.md+' MD</span></div>'+(( t.assignees||[]).length?'<div class="kc-asg">'+esc((t.assignees||[]).join(', '))+'</div>':'')+
+      '</div>';}).join('');
+    return '<div class="kcol"><div class="kcol-hd"><span class="badge" style="background:'+sb[0]+';color:'+sb[1]+'">'+st+'</span><span class="kcol-n">'+items.length+'</span></div><div class="kcol-body">'+(cards||'<div class="kempty">—</div>')+'</div></div>';
+  }).join('');
+  document.getElementById('kanban').innerHTML=cols;
+}
+
+// ---------- tabs / toggles ----------
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));t.classList.add('on');document.getElementById('p-'+t.dataset.p).classList.add('on');});
+document.getElementById('wsw').onclick=function(){mode=mode==="off"?"on":"off";this.classList.toggle('on',mode==="on");document.getElementById('wstate').textContent=mode==="on"?"ON":"OFF";render();};
+document.getElementById('roleFilter').onchange=function(){roleFilter=this.value;render();};
+// timeline zoom
+document.querySelectorAll('#zoomseg button').forEach(b=>b.onclick=function(){
+  zoom=this.dataset.z;document.querySelectorAll('#zoomseg button').forEach(x=>x.classList.toggle('on',x===this));
+  render();});
+// left-column fold: auto on horizontal scroll, manual override via button, auto-expand at scrollLeft 0
+const gscroll=document.getElementById('gscroll'),foldBtn=document.getElementById('foldBtn');
+function syncFoldBtn(){const f=gscroll.classList.contains('gfold');foldBtn.textContent=f?'›':'‹';foldBtn.title=f?'담당·MD·기간·상태 펼치기':'담당·MD·기간·상태 접기';}
+gscroll.addEventListener('scroll',()=>{gscroll.classList.toggle('gfold',gscroll.scrollLeft>4);syncFoldBtn();});
+foldBtn.onclick=()=>{gscroll.classList.toggle('gfold');syncFoldBtn();};
+document.getElementById('editBtn').onclick=function(){editMode=!editMode;
+  document.getElementById('editToolbar').classList.toggle('on',editMode);
+  document.getElementById('emBadge').classList.toggle('on',editMode);
+  this.textContent=editMode?"편집 종료":"편집 모드";
+  this.classList.toggle('primary',editMode);
+  render();};
+
+// ---------- undo / snapshot ----------
+function snapshot(){undoStack.push(JSON.stringify(MODEL));if(undoStack.length>30)undoStack.shift();}
+function stampEdit(){document.getElementById('lastEdit').textContent='방금 (미저장 · 내보내기로 보관)';}
+document.getElementById('undoBtn').onclick=()=>{if(!undoStack.length){toast("되돌릴 변경이 없습니다");return;}MODEL=JSON.parse(undoStack.pop());render();toast("되돌렸습니다");};
+
+// ---------- toast ----------
+let toastT;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),1800);}
+
+// ---------- task modal ----------
+function optionList(sel,arr,val){sel.innerHTML=arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('');}
+function openTask(id,presetPhase){
+  editingId=id; const t=id?MODEL.tasks.find(x=>x.id===id):null;
+  document.getElementById('taskTitle').textContent=id?('태스크 수정 · '+id):'태스크 추가';
+  document.getElementById('taskDelete').style.display=id?'inline-block':'none';
+  const fPhase=document.getElementById('fPhase');
+  fPhase.innerHTML=MODEL.phases.map(p=>'<option value="'+p.id+'"'+((t?t.phase:presetPhase)===p.id?' selected':'')+'>'+p.id+'. '+esc(p.name)+'</option>').join('');
+  optionList(document.getElementById('fRole'),MODEL.roles,t?t.role:MODEL.roles[0]);
+  optionList(document.getElementById('fStatus'),MODEL.statuses,t?t.status:"예정");
+  document.getElementById('fId').value=t?t.id:suggestId(presetPhase||MODEL.phases[0].id);
+  document.getElementById('fId').readOnly=!!id;
+  document.getElementById('fName').value=t?t.name:"";
+  document.getElementById('fMd').value=t?t.md:4;
+  document.getElementById('fDur').value=t?t.dur:3;
+  const asg=t?(t.assignees||[]):[];
+  document.getElementById('fAsg').innerHTML=MODEL.people.length?MODEL.people.map(p=>'<label><input type="checkbox" value="'+esc(p)+'"'+(asg.indexOf(p)>=0?' checked':'')+'><span>'+esc(p)+'</span></label>').join(''):'<div style="color:var(--sub);font-size:13px;padding:2px 4px">설정 → 인력(담당자)에서 먼저 추가하세요</div>';
+  const deps=t?t.deps:[];
+  document.getElementById('fDeps').innerHTML=MODEL.tasks.filter(x=>!id||x.id!==id).sort(byWbs).map(x=>'<label><input type="checkbox" value="'+x.id+'"'+(deps.indexOf(x.id)>=0?' checked':'')+'><span><b>'+x.id+'</b> '+esc(x.name)+'</span></label>').join('');
+  ["errId","errName","errMd","errDur","errDeps"].forEach(e=>document.getElementById(e).textContent="");
+  document.getElementById('taskOverlay').classList.add('on');
+}
+function suggestId(phase){let mx=0;MODEL.tasks.forEach(t=>{const p=t.id.split('.');if(p[0]===String(phase))mx=Math.max(mx,Number(p[1]||0));});return phase+"."+(mx+1);}
+function hasCycle(tasks){
+  const byId={};tasks.forEach(t=>byId[t.id]=t);const state={};
+  const dfs=n=>{if(state[n]===1)return true;if(state[n]===2)return false;state[n]=1;
+    const v=byId[n];if(v)for(const d of v.deps){if(byId[d]&&dfs(d))return true;}state[n]=2;return false;};
+  for(const t of tasks)if(dfs(t.id))return true;return false;
+}
+document.getElementById('taskSave').onclick=()=>{
+  const id=document.getElementById('fId').value.trim();
+  const name=document.getElementById('fName').value.trim();
+  const md=parseInt(document.getElementById('fMd').value,10);
+  const dur=parseInt(document.getElementById('fDur').value,10);
+  const phase=document.getElementById('fPhase').value;
+  const role=document.getElementById('fRole').value;
+  const status=document.getElementById('fStatus').value;
+  const deps=[...document.querySelectorAll('#fDeps input:checked')].map(c=>c.value);
+  const assignees=[...document.querySelectorAll('#fAsg input:checked')].map(c=>c.value);
+  let ok=true;const setErr=(e,m)=>{document.getElementById(e).textContent=m;if(m)ok=false;};
+  ["errId","errName","errMd","errDur","errDeps"].forEach(e=>setErr(e,""));
+  if(!id)setErr("errId","ID를 입력하세요");
+  if(!editingId && MODEL.tasks.some(t=>t.id===id))setErr("errId","이미 존재하는 ID");
+  if(!/^[0-9]+\.[0-9]+$/.test(id))setErr("errId","형식은 숫자.숫자 (예: 3.5)");
+  if(!name)setErr("errName","태스크명을 입력하세요");
+  if(!(md>0))setErr("errMd","1 이상");
+  if(!(dur>0))setErr("errDur","1 이상");
+  if(deps.indexOf(id)>=0)setErr("errDeps","자기 자신은 선행이 될 수 없습니다");
+  if(!ok)return;
+  const newTask={id,name,phase,role,md,dur,deps,status,assignees};
+  const trial=editingId?MODEL.tasks.map(t=>t.id===editingId?newTask:t):MODEL.tasks.concat([newTask]);
+  if(hasCycle(trial)){setErr("errDeps","선행관계에 순환(cycle)이 생깁니다");return;}
+  snapshot();
+  if(editingId){
+    // ID 변경 시 다른 태스크 deps 갱신
+    if(editingId!==id)MODEL.tasks.forEach(t=>{t.deps=t.deps.map(d=>d===editingId?id:d);});
+    MODEL.tasks=MODEL.tasks.map(t=>t.id===editingId?newTask:t);
+  } else MODEL.tasks.push(newTask);
+  closeAll();stampEdit();render();toast(editingId?"수정됨":"추가됨");
+};
+document.getElementById('taskDelete').onclick=()=>{
+  if(!editingId)return;snapshot();
+  MODEL.tasks=MODEL.tasks.filter(t=>t.id!==editingId);
+  MODEL.tasks.forEach(t=>{t.deps=t.deps.filter(d=>d!==editingId);});
+  closeAll();stampEdit();render();toast("삭제됨");
+};
+document.getElementById('addTaskBtn').onclick=()=>openTask(null,MODEL.phases[0].id);
+
+// ---------- settings modal ----------
+function openSettings(){
+  document.getElementById('sProj').value=MODEL.settings.project||"";
+  document.getElementById('sToday').value=MODEL.settings.today;
+  document.getElementById('sBuffer').value=MODEL.settings.buffer_wd;
+  document.getElementById('sMdmm').value=MODEL.settings.md_per_mm;
+  renderHchips(); renderRchips(); renderPchips(); renderPhList();
+  document.getElementById('setOverlay').classList.add('on');
+}
+function renderPchips(){
+  document.getElementById('pChips').innerHTML=MODEL.people.length?MODEL.people.map(p=>'<span class="hchip"><b>'+esc(p)+'</b> <span class="del" data-pdel="'+esc(p)+'">×</span></span>').join(''):'<span style="color:var(--sub);font-size:13px">등록된 인력이 없습니다</span>';
+  document.querySelectorAll('[data-pdel]').forEach(el=>el.onclick=()=>{
+    const p=el.getAttribute('data-pdel'), used=MODEL.tasks.filter(t=>(t.assignees||[]).indexOf(p)>=0).length;
+    if(used){toast('"'+p+'" 은(는) 태스크 '+used+'개에 배정되어 삭제할 수 없습니다');return;}
+    MODEL.people=MODEL.people.filter(x=>x!==p);renderPchips();
+  });
+}
+document.getElementById('pAdd').onclick=()=>{const n=document.getElementById('pName').value.trim();if(!n)return;if(MODEL.people.indexOf(n)>=0){toast('이미 있는 인력입니다');return;}MODEL.people.push(n);document.getElementById('pName').value='';renderPchips();};
+function renderRchips(){
+  document.getElementById('rChips').innerHTML=MODEL.roles.map(r=>'<span class="hchip"><b>'+esc(r)+'</b> <span class="del" data-rdel="'+esc(r)+'">×</span></span>').join('');
+  document.querySelectorAll('[data-rdel]').forEach(el=>el.onclick=()=>{
+    const r=el.getAttribute('data-rdel'), used=MODEL.tasks.filter(t=>t.role===r).length;
+    if(used){toast('"'+r+'" 은(는) 태스크 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}
+    MODEL.roles=MODEL.roles.filter(x=>x!==r);renderRchips();
+  });
+}
+document.getElementById('rAdd').onclick=()=>{
+  const n=document.getElementById('rName').value.trim();
+  if(!n)return;
+  if(MODEL.roles.indexOf(n)>=0){toast('이미 있는 담당입니다');return;}
+  MODEL.roles.push(n);document.getElementById('rName').value="";renderRchips();
+};
+function renderHchips(){
+  document.getElementById('hChips').innerHTML=MODEL.holidays.slice().sort((a,b)=>a.date<b.date?-1:1).map(h=>'<span class="hchip"><b>'+h.date+'</b> '+esc(h.name)+' <span class="del" data-hdel="'+h.date+'">×</span></span>').join('');
+  document.querySelectorAll('[data-hdel]').forEach(el=>el.onclick=()=>{const d=el.getAttribute('data-hdel');MODEL.holidays=MODEL.holidays.filter(h=>h.date!==d);renderHchips();});
+}
+document.getElementById('hAdd').onclick=()=>{const d=document.getElementById('hDate').value,n=document.getElementById('hName').value.trim()||"공휴일";if(!d)return;if(!MODEL.holidays.some(h=>h.date===d))MODEL.holidays.push({date:d,name:n});document.getElementById('hName').value="";renderHchips();};
+function renderPhList(){
+  document.getElementById('phList').innerHTML=MODEL.phases.map((p,i)=>'<div class="phrow"><span style="width:30px;color:#889">'+p.id+'</span><input type="text" data-phname="'+i+'" value="'+esc(p.name)+'"><input type="color" data-phcolor="'+i+'" value="'+p.color+'"></div>').join('');
+}
+document.getElementById('setSave').onclick=()=>{
+  snapshot();
+  MODEL.settings.project=document.getElementById('sProj').value.trim()||MODEL.settings.project;
+  MODEL.settings.today=document.getElementById('sToday').value||MODEL.settings.today;
+  MODEL.settings.buffer_wd=Math.max(0,parseInt(document.getElementById('sBuffer').value,10)||0);
+  MODEL.settings.md_per_mm=Math.max(1,parseInt(document.getElementById('sMdmm').value,10)||20);
+  document.querySelectorAll('[data-phname]').forEach(el=>{MODEL.phases[+el.getAttribute('data-phname')].name=el.value.trim();});
+  document.querySelectorAll('[data-phcolor]').forEach(el=>{MODEL.phases[+el.getAttribute('data-phcolor')].color=el.value;});
+  closeAll();stampEdit();render();toast("설정 저장됨");
+};
+document.getElementById('settingsBtn').onclick=openSettings;
+
+// ---------- export / import ----------
+document.getElementById('exportBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify(MODEL,null,1)],{type:"application/json"});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download="wbs_model.json";a.click();URL.revokeObjectURL(a.href);toast("내보냈습니다");
+};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const m=JSON.parse(r.result);if(!m.tasks||!m.settings)throw 0;snapshot();MODEL=m;stampEdit();render();toast("가져왔습니다");}catch(_){toast("올바른 모델 JSON이 아닙니다");}};
+  r.readAsText(f);e.target.value="";};
+
+// ---------- close ----------
+function closeAll(){document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('on'));}
+document.querySelectorAll('[data-close]').forEach(el=>el.onclick=closeAll);
+document.querySelectorAll('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o)closeAll();});
+document.addEventListener('keydown',e=>{if(e.key==="Escape")closeAll();});
+
+render();
+</script>
+</body></html>
