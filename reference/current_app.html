@@ -210,7 +210,9 @@ table{width:100%;border-collapse:collapse}
 .kcol-n{font-size:12px;color:#889;font-weight:700}
 .kcol-body{display:flex;flex-direction:column;gap:8px}
 .kcard{background:#ffffff;border:1px solid var(--line);border-radius:9px;padding:9px 11px;box-shadow:0 1px 2px rgba(20,25,32,.05);cursor:pointer}
-.kcard[data-drag]{cursor:grab;touch-action:none}
+.kcard[data-drag]{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+body.kdragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
+body.kdragging *{cursor:grabbing !important}
 .kcard.dragging{opacity:.4}
 .kghost{position:fixed;z-index:90;pointer-events:none;transform:translate(-50%,-50%) rotate(1.5deg);opacity:.9;box-shadow:0 12px 30px rgba(20,25,32,.25)}
 .kcol-body{min-height:40px}
@@ -962,12 +964,14 @@ document.addEventListener('keydown',e=>{if(e.key==="Escape")closeAll();});
 function kanbanPointerDown(e){
   if(!editMode||e.button!==0) return;
   const card=e.target.closest('[data-drag]'); if(!card) return;
+  e.preventDefault();   // 텍스트 선택 시작 차단
   kdrag={id:card.getAttribute('data-drag'), card, x0:e.clientX, y0:e.clientY, moved:false, ghost:null};
 }
 document.addEventListener('pointermove',e=>{
   if(!kdrag) return;
   if(!kdrag.moved && Math.hypot(e.clientX-kdrag.x0, e.clientY-kdrag.y0) > 5){
-    kdrag.moved=true; kdrag.card.classList.add('dragging');
+    kdrag.moved=true; kdrag.card.classList.add('dragging'); document.body.classList.add('kdragging');
+    const sel=window.getSelection&&window.getSelection(); if(sel&&sel.removeAllRanges) sel.removeAllRanges();
     const r=kdrag.card.getBoundingClientRect();
     const g=kdrag.card.cloneNode(true); g.classList.add('kghost'); g.style.width=r.width+'px';
     document.body.appendChild(g); kdrag.ghost=g;
@@ -982,7 +986,7 @@ document.addEventListener('pointermove',e=>{
 document.addEventListener('pointerup',e=>{
   if(!kdrag) return; const d=kdrag; kdrag=null;
   document.querySelectorAll('[data-drop].dragover').forEach(c=>c.classList.remove('dragover'));
-  if(d.ghost) d.ghost.remove(); d.card.classList.remove('dragging');
+  if(d.ghost) d.ghost.remove(); d.card.classList.remove('dragging'); document.body.classList.remove('kdragging');
   if(d.moved){
     suppressClick=true; setTimeout(()=>suppressClick=false, 60);   // 드래그 직후 카드 클릭(모달) 방지
     const el=document.elementFromPoint(e.clientX,e.clientY), col=el&&el.closest('[data-drop]');
