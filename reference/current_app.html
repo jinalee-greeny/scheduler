@@ -24,35 +24,32 @@ h1{font-size:26px;margin:0}
 .assump b{color:#5b6470;font-weight:600}
 .kpis{margin-bottom:16px}
 .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8a9299}
-/* ===== deadline anchor (hero: the fixed date everything is computed backward from) ===== */
-.anchor{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:22px 26px;box-shadow:0 1px 2px rgba(20,25,32,.04)}
-.anchor-hd{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-.anchor-hd h1{font-size:22px;margin:0;letter-spacing:-.01em}
-.anchor-meta{color:#8a919b;font-size:12.5px}
-.anchor-body{display:grid;grid-template-columns:minmax(220px,auto) 1fr;gap:36px;align-items:center}
-.anchor .eyebrow{color:var(--sub)}
-.anchor-date{font-family:var(--mono);font-size:40px;font-weight:600;letter-spacing:-.02em;line-height:1.05;margin-top:6px}
-.anchor-pills{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+/* ===== hero: title + thin timeline bar (no box, sits directly on background) ===== */
+.hero{padding:2px 4px 0}
+.hero-hd{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.hero-hd h1{font-size:22px;margin:0;letter-spacing:-.01em}
+.hero-meta{color:#8a919b;font-size:12.5px}
+.rwcap{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:#8a919b;margin-bottom:9px}
+.rwcap .end{color:#5b6470;font-weight:700}
+.anchor-pills{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
 .dday-n,.slack-r{display:inline-block;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.04em;border-radius:6px;padding:3px 11px}
 .dday-n{color:#fff;background:#2b313a}
 .slack-r{color:#fff;background:var(--crit)}
 .slack-a{color:#fff;background:#c2410c}
 .slack-n{color:#2f6b41;background:#dff0e4}
-.runway-hd{font-family:var(--mono);font-size:12px;color:#8a919b;display:flex;justify-content:space-between;gap:12px}
-.runway-hd .risk{color:var(--crit);font-weight:700}
-.runway-hd .risk-ok{color:#9aa2ab;font-weight:600}
-.rw2{position:relative;padding-top:22px;margin-top:2px}
-.rw2-bar{position:relative;display:flex;height:22px;border-radius:8px;overflow:hidden;font-family:var(--mono);font-size:11px;line-height:22px;text-align:center;color:#fff}
-.rw2-bar .past{background:rgba(28,33,38,.12);color:#7b828b;min-width:2px}
-.rw2-bar .work{background:#3fae5f;min-width:2px}
-.rw2-bar .buf{background:#a9e4b7;color:#2f6b41;min-width:2px}
-.rw2-today{position:absolute;top:12px;bottom:-4px;width:0;border-left:2px solid #e8930c;z-index:2}
-.rw2-today::after{content:"오늘";position:absolute;top:-18px;left:-11px;font:700 10px var(--mono);color:#c47408}
-.rw2-ticks{position:relative;height:15px;margin-top:8px;font-family:var(--mono);font-size:11px;color:#9aa2ab}
-.rw2-ticks span{position:absolute;white-space:nowrap}
-.rw2-ticks b{color:#5b6470;font-weight:600}
-.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px}
+/* thin 2-segment runway bar (no labels) — detail on hover */
+.rwbar{position:relative;cursor:default}
+.rwtrack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,.06)}
+.rwbar .work{background:var(--acc)}
+.rwbar .buf{background:#a9e4b7}
+.rwbar .tip{position:absolute;bottom:20px;left:0;background:#1c2126;color:#fff;border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.6;font-weight:600;white-space:nowrap;opacity:0;transform:translateY(4px);transition:.16s;pointer-events:none;box-shadow:0 6px 20px rgba(20,25,32,.22);z-index:5}
+.rwbar .tip::after{content:"";position:absolute;top:100%;left:22px;border:5px solid transparent;border-top-color:#1c2126}
+.rwbar .tip b{color:#a9e4b7}
+.rwbar:hover .tip{opacity:1;transform:translateY(0)}
+.strip{display:grid;grid-template-columns:1.25fr repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:22px}
 .cell{background:#ffffff;padding:14px 16px}
+.cell.anchor-cell{background:#f7faf8}
+.cell.anchor-cell .v{font-family:var(--mono);font-size:22px;font-weight:600}
 .cell .l{color:var(--sub);font-size:12px;letter-spacing:.01em;margin-bottom:6px}
 .cell .v{font-size:26px;font-weight:750;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .cell .v small{font-size:12px;font-weight:600;color:var(--sub);font-family:var(--mono)}
@@ -61,7 +58,7 @@ h1{font-size:26px;margin:0}
 .cell .d2 b{color:#5b6470;font-weight:600}
 .progress{height:6px;background:#eceef1;border-radius:4px;margin-top:8px;overflow:hidden}
 .progress>div{height:100%;background:#3fae5f}
-@media(max-width:860px){.anchor-body{grid-template-columns:1fr;gap:18px}.strip{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){.strip{grid-template-columns:repeat(2,1fr)}}
 .ctrlbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .tabs{display:flex;gap:4px}
 .tab{padding:10px 17px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:14px;color:#556}
@@ -245,9 +242,9 @@ body{color:var(--ink);background:
   linear-gradient(180deg,#fbfcfd 0%,#f2f4f7 100%);
   background-attachment:fixed}
 /* floating frosted panels (with blur) */
-.appbar,.anchor,.mm-card,.kcol,.kcard,.modal,.edittoolbar.on,.tab,.btn,.wtoggle,.rolefilter,.zoomseg{
+.appbar,.mm-card,.kcol,.kcard,.modal,.edittoolbar.on,.tab,.btn,.wtoggle,.rolefilter,.zoomseg{
   -webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
-.appbar,.anchor,.mm-card,.kcol,.modal{background:var(--glass);border:1px solid var(--gbrd);border-radius:18px;
+.appbar,.mm-card,.kcol,.modal{background:var(--glass);border:1px solid var(--gbrd);border-radius:18px;
   box-shadow:var(--gshadow),inset 0 1px 0 rgba(255,255,255,.6)}
 /* GNB: de-boxed → floating frosted sticky bar */
 .appbar{position:sticky;top:10px;z-index:30;border-radius:16px}
@@ -265,7 +262,7 @@ body{color:var(--ink);background:
 /* table containers: glass frame, no blur (keeps sticky-scroll crisp) */
 .card{background:var(--glass);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
 .strip{background:var(--gdiv);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
-.cell{background:rgba(255,255,255,.46);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+.cell{background:#fff}
 /* dense table: transparent rows show frosted card; frozen cells stay near-opaque so timeline hides on scroll */
 .gtbl thead th{background:rgba(246,248,252,.72)}
 .gtbl th:nth-child(1),.gtbl td.wbs{background:rgba(250,251,253,.94)}
@@ -288,10 +285,9 @@ body{color:var(--ink);background:
 .pagehd{margin-bottom:10px}
 .assump{margin:14px 0 24px}
 .kpis{margin-bottom:24px}
-.anchor{padding:24px 30px}
-.anchor-body{gap:44px}
-.strip{margin-top:16px}
-.cell{padding:20px 22px}
+.hero{padding:2px 6px 0}
+.strip{margin-top:24px}
+.cell{padding:18px 22px}
 .cell .l{margin-bottom:8px}
 .ctrlbar{gap:16px;margin-bottom:22px}
 .tabs{gap:6px}
@@ -639,29 +635,23 @@ function render(){
   const slackCls=sc.minSlack<=0?'slack-r':(sc.minSlack<=2?'slack-a':'slack-n');
   const riskCls=sc.minSlack<=2?'risk':'risk-ok';
   document.getElementById('kpis').innerHTML=
-    '<div class="anchor">'+
-      '<div class="anchor-hd">'+
+    '<div class="hero">'+
+      '<div class="hero-hd">'+
         '<h1>일정관리 시스템 구축 · 프로젝트 일정 <span class="editmode-badge'+(editMode?' on':'')+'" id="emBadge">편집 모드</span></h1>'+
-        '<div class="anchor-meta">02. 일정관리자 · pxd &nbsp;·&nbsp; 기준 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영 &nbsp;·&nbsp; 업데이트 <span id="lastEdit">'+lastEditLabel+'</span></div>'+
+        '<div class="hero-meta">02. 일정관리자 · pxd &nbsp;·&nbsp; 기준 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영 &nbsp;·&nbsp; 업데이트 <span id="lastEdit">'+lastEditLabel+'</span></div>'+
       '</div>'+
-      '<div class="anchor-body">'+
-        '<div class="anchor-main"><div class="eyebrow">목표 오픈 · TARGET OPEN</div>'+
-          '<div class="anchor-date">'+sc.target+'</div>'+
-          '<div class="anchor-pills"><span class="dday-n">D-'+sc.dday+'</span><span class="'+slackCls+'">여유 '+sc.minSlack+'일</span></div></div>'+
-        '<div class="runway">'+
-          '<div class="runway-hd"><span>프로젝트 타임라인 · 시작 → 오픈</span><span class="'+riskCls+'">CP 지연 = 오픈일 지연</span></div>'+
-          '<div class="rw2"><div class="rw2-bar">'+
-            '<div class="past" style="width:'+pastPct.toFixed(1)+'%">경과</div>'+
-            '<div class="work" style="width:'+workPct.toFixed(1)+'%">남은 작업 '+sc.remainWd+' 근무일</div>'+
-            '<div class="buf" style="width:'+bufPct.toFixed(1)+'%">버퍼 '+MODEL.settings.buffer_wd+'일</div>'+
-          '</div><div class="rw2-today" style="left:'+pastPct.toFixed(1)+'%"></div></div>'+
-          '<div class="rw2-ticks"><span style="left:0">'+shortD(sc.projStart)+' 시작</span>'+
-            '<span style="left:'+asapLeft.toFixed(1)+'%;transform:translateX(-50%)"><b>ASAP '+shortD(sc.asap)+'</b></span>'+
-            '<span style="right:0"><b>'+shortD(sc.target)+' 오픈</b></span></div>'+
+      '<div class="rwcap"><span>프로젝트 타임라인 · '+shortD(sc.projStart)+' 시작</span><span class="end">'+shortD(sc.target)+' 오픈</span></div>'+
+      '<div class="rwbar">'+
+        '<div class="rwtrack">'+
+          '<div class="work" style="width:'+asapLeft.toFixed(1)+'%"></div>'+
+          '<div class="buf" style="width:'+bufPct.toFixed(1)+'%"></div>'+
         '</div>'+
+        '<div class="tip">착수 오늘 → <b>ASAP '+shortD(sc.asap)+'</b> · 버퍼 <b>'+MODEL.settings.buffer_wd+'일</b> · 여유 <b>'+sc.minSlack+'일</b></div>'+
       '</div>'+
     '</div>'+
     '<div class="strip">'+
+      '<div class="cell anchor-cell"><div class="l">목표 오픈 · TARGET OPEN</div><div class="v">'+sc.target+'</div>'+
+        '<div class="anchor-pills"><span class="dday-n">D-'+sc.dday+'</span><span class="'+slackCls+'">여유 '+sc.minSlack+'일</span></div></div>'+
       cell("잔여 공수",roll.rnd(roll.remain)+'<small> M/M</small>','총 <b>'+roll.rnd(roll.total)+' M/M</b> · '+roll.remain+'/'+roll.total+' MD')+
       '<div class="cell"><div class="l">진행률</div><div class="v">'+roll.progress+'<small>%</small></div><div class="progress"><div style="width:'+roll.progress+'%"></div></div></div>'+
       cell("크리티컬 패스",sc.critical.length+'<small> 개</small>',bnId?('병목 <b>'+bnId+' '+esc(bnName)+'</b>'):'—')+
