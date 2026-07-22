@@ -210,9 +210,11 @@ table{width:100%;border-collapse:collapse}
 .kcol-n{font-size:12px;color:#889;font-weight:700}
 .kcol-body{display:flex;flex-direction:column;gap:8px}
 .kcard{background:#ffffff;border:1px solid var(--line);border-radius:9px;padding:9px 11px;box-shadow:0 1px 2px rgba(20,25,32,.05);cursor:pointer}
-.kcard[draggable="true"]{cursor:grab}
-.kcard.dragging{opacity:.45}
-.kcol-body.dragover{outline:1.5px dashed #93b4f5;outline-offset:2px;border-radius:9px;background:rgba(37,99,235,.05)}
+.kcard[data-drag]{cursor:grab;touch-action:none}
+.kcard.dragging{opacity:.4}
+.kghost{position:fixed;z-index:90;pointer-events:none;transform:translate(-50%,-50%) rotate(1.5deg);opacity:.9;box-shadow:0 12px 30px rgba(20,25,32,.25)}
+.kcol-body{min-height:40px}
+.kcol-body.dragover{outline:2px dashed #6b9bf5;outline-offset:2px;border-radius:9px;background:rgba(37,99,235,.07)}
 .kc-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .kc-wbs{font-size:12px;color:#9aa2ab;font-weight:700;font-variant-numeric:tabular-nums}
 .kc-name{font-size:14px;font-weight:650;line-height:1.35;margin-bottom:8px}
@@ -526,6 +528,7 @@ MODEL.people=MODEL.people||[];                          // 전역 인력(담당�
 MODEL.tasks.forEach(t=>{t.assignees=t.assignees||[];}); // 태스크별 담당자 이름 배열
 const SB={"완료":["#e7f6ec","#1a7f37"],"진행중":["#e7f0fd","#1a56db"],"예정":["#eef0f2","#5b6470"],"보류":["#f1f2f4","#6b7280"],"취소":["#fdeaea","#c0392b"]};
 let mode="off", editMode=false, editingId=null, roleFilter="", zoom="fit";
+let kdrag=null, suppressClick=false;   // 칸반 포인터 드래그 상태
 const undoStack=[];
 
 // ---------- view helpers (visual layer only) ----------
@@ -695,24 +698,12 @@ function render(){
 
   renderList(sc,roll,PM); renderKanban(sc,PM);
 
-  document.querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>openTask(el.getAttribute('data-edit')));
+  document.querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>{if(suppressClick)return;openTask(el.getAttribute('data-edit'));});
   document.querySelectorAll('[data-roleedit]').forEach(td=>td.onclick=e=>{e.stopPropagation();inlineRole(td,td.getAttribute('data-roleedit'));});
+  const kb=document.getElementById('kanban'); if(kb) kb.onpointerdown = editMode ? kanbanPointerDown : null;
   if(editMode){
     document.querySelectorAll('[data-addphase]').forEach(el=>el.onclick=()=>openTask(null,el.getAttribute('data-addphase')));
     document.querySelectorAll('[data-cyc]').forEach(el=>el.onclick=e=>{e.stopPropagation();cycleStatus(el.getAttribute('data-cyc'));});
-    // 칸반 드래그로 상태 변경
-    document.querySelectorAll('[data-drag]').forEach(c=>{
-      c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',c.getAttribute('data-drag'));e.dataTransfer.effectAllowed='move';setTimeout(()=>c.classList.add('dragging'),0);});
-      c.addEventListener('dragend',()=>c.classList.remove('dragging'));
-    });
-    document.querySelectorAll('[data-drop]').forEach(col=>{
-      col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('dragover');});
-      col.addEventListener('dragleave',()=>col.classList.remove('dragover'));
-      col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('dragover');
-        const id=e.dataTransfer.getData('text/plain'),st=col.getAttribute('data-drop');
-        const t=MODEL.tasks.find(x=>x.id===id);
-        if(t&&t.status!==st){snapshot();t.status=st;stampEdit();render();toast(id+' → '+st);}});
-    });
   }
 }
 // inline 담당 편집 — 스케줄표에서 파트 + 담당자를 바로 세팅
@@ -778,7 +769,7 @@ function renderKanban(sc,PM){
     const items=visTasks().filter(t=>t.status===st).sort(byWbs);
     const sb=SB[st]||["#eee","#333"];
     const cards=items.map(t=>{const ph=PM[t.phase]||{name:t.phase,color:"#888"}, s=sc.task[t.id];
-      const drag=editMode?' draggable="true" data-drag="'+t.id+'"':'';
+      const drag=editMode?' data-drag="'+t.id+'"':'';
       return '<div class="kcard" data-edit="'+t.id+'"'+drag+'>'+
         '<div class="kc-top"><span class="kc-wbs">'+t.id+'</span>'+(s.critical?'<span class="crittag">CP</span>':'')+'</div>'+
         '<div class="kc-name">'+esc(t.name)+'</div>'+
@@ -966,6 +957,39 @@ function closeAll(){document.querySelectorAll('.overlay').forEach(o=>o.classList
 document.querySelectorAll('[data-close]').forEach(el=>el.onclick=closeAll);
 document.querySelectorAll('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o)closeAll();});
 document.addEventListener('keydown',e=>{if(e.key==="Escape")closeAll();});
+
+// ---------- 칸반 포인터 드래그 (네이티브 DnD 대체 — 어디서든 안정 동작) ----------
+function kanbanPointerDown(e){
+  if(!editMode||e.button!==0) return;
+  const card=e.target.closest('[data-drag]'); if(!card) return;
+  kdrag={id:card.getAttribute('data-drag'), card, x0:e.clientX, y0:e.clientY, moved:false, ghost:null};
+}
+document.addEventListener('pointermove',e=>{
+  if(!kdrag) return;
+  if(!kdrag.moved && Math.hypot(e.clientX-kdrag.x0, e.clientY-kdrag.y0) > 5){
+    kdrag.moved=true; kdrag.card.classList.add('dragging');
+    const r=kdrag.card.getBoundingClientRect();
+    const g=kdrag.card.cloneNode(true); g.classList.add('kghost'); g.style.width=r.width+'px';
+    document.body.appendChild(g); kdrag.ghost=g;
+  }
+  if(kdrag.moved){
+    kdrag.ghost.style.left=e.clientX+'px'; kdrag.ghost.style.top=e.clientY+'px';
+    document.querySelectorAll('[data-drop].dragover').forEach(c=>c.classList.remove('dragover'));
+    const el=document.elementFromPoint(e.clientX,e.clientY), col=el&&el.closest('[data-drop]');
+    if(col) col.classList.add('dragover');
+  }
+});
+document.addEventListener('pointerup',e=>{
+  if(!kdrag) return; const d=kdrag; kdrag=null;
+  document.querySelectorAll('[data-drop].dragover').forEach(c=>c.classList.remove('dragover'));
+  if(d.ghost) d.ghost.remove(); d.card.classList.remove('dragging');
+  if(d.moved){
+    suppressClick=true; setTimeout(()=>suppressClick=false, 60);   // 드래그 직후 카드 클릭(모달) 방지
+    const el=document.elementFromPoint(e.clientX,e.clientY), col=el&&el.closest('[data-drop]');
+    if(col){ const st=col.getAttribute('data-drop'), t=MODEL.tasks.find(x=>x.id===d.id);
+      if(t && t.status!==st){ snapshot(); t.status=st; stampEdit(); render(); toast(d.id+' → '+st); } }
+  }
+});
 
 render();
 </script>
