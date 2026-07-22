@@ -31,6 +31,7 @@ h1{font-size:26px;margin:0}
 .hero-meta{color:#8a919b;font-size:12.5px}
 .rwcap{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:#8a919b;margin-bottom:9px}
 .rwcap .end{color:#5b6470;font-weight:700}
+.rwcap .pg{color:#2f8f4a;font-weight:700}
 .anchor-pills{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
 .dday-n,.slack-r{display:inline-block;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.04em;border-radius:6px;padding:3px 11px}
 .dday-n{color:#fff;background:#2b313a}
@@ -39,9 +40,10 @@ h1{font-size:26px;margin:0}
 .slack-n{color:#2f6b41;background:#dff0e4}
 /* thin 2-segment runway bar (no labels) — detail on hover */
 .rwbar{position:relative;cursor:default}
-.rwtrack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,.06)}
+.rwtrack{position:relative;display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,.06)}
 .rwbar .work{background:#a9e4b7}
 .rwbar .buf{background-color:#fff;background-image:repeating-linear-gradient(45deg,#4ecb6a 0 1.5px,#fff 1.5px 7px)}
+.rwbar .done{position:absolute;left:0;top:0;bottom:0;background:var(--acc);z-index:1}
 .rwbar .tip{position:absolute;bottom:20px;left:0;background:#1c2126;color:#fff;border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.6;font-weight:600;white-space:nowrap;opacity:0;transform:translateY(4px);transition:.16s;pointer-events:none;box-shadow:0 6px 20px rgba(20,25,32,.22);z-index:5}
 .rwbar .tip::after{content:"";position:absolute;top:100%;left:22px;border:5px solid transparent;border-top-color:#1c2126}
 .rwbar .tip b{color:#a9e4b7}
@@ -640,11 +642,12 @@ function render(){
         '<h1>일정관리 시스템 구축 · 프로젝트 일정 <span class="editmode-badge'+(editMode?' on':'')+'" id="emBadge">편집 모드</span></h1>'+
         '<div class="hero-meta">02. 일정관리자 · pxd &nbsp;·&nbsp; 기준 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영 &nbsp;·&nbsp; 업데이트 <span id="lastEdit">'+lastEditLabel+'</span></div>'+
       '</div>'+
-      '<div class="rwcap"><span>프로젝트 타임라인 · '+shortD(sc.projStart)+' 시작</span><span class="end">'+shortD(sc.target)+' 오픈</span></div>'+
+      '<div class="rwcap"><span>진행률 <b class="pg">'+roll.progress+'%</b> · '+shortD(sc.projStart)+' 시작</span><span class="end">'+shortD(sc.target)+' 오픈</span></div>'+
       '<div class="rwbar">'+
         '<div class="rwtrack">'+
           '<div class="work" style="width:'+asapLeft.toFixed(1)+'%"></div>'+
           '<div class="buf" style="width:'+bufPct.toFixed(1)+'%"></div>'+
+          '<div class="done" style="width:'+roll.progress+'%"></div>'+
         '</div>'+
         '<div class="tip">착수 오늘 → <b>ASAP '+shortD(sc.asap)+'</b> · 버퍼 <b>'+MODEL.settings.buffer_wd+'일</b> · 여유 <b>'+sc.minSlack+'일</b></div>'+
       '</div>'+
