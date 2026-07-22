@@ -48,7 +48,7 @@ h1{font-size:26px;margin:0}
 .rwbar .tip::after{content:"";position:absolute;top:100%;left:22px;border:5px solid transparent;border-top-color:#1c2126}
 .rwbar .tip b{color:#a9e4b7}
 .rwbar:hover .tip{opacity:1;transform:translateY(0)}
-.strip{display:grid;grid-template-columns:1.25fr repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:22px}
+.strip{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:22px}
 .cell{background:#ffffff;padding:14px 16px}
 .cell.anchor-cell{background:#f7faf8}
 .cell.anchor-cell .v{font-size:24px}
@@ -656,7 +656,6 @@ function render(){
       '<div class="cell anchor-cell"><div class="l">목표 오픈 · TARGET OPEN</div><div class="v">'+sc.target+'</div>'+
         '<div class="anchor-pills"><span class="dday-n">D-'+sc.dday+'</span><span class="'+slackCls+'">여유 '+sc.minSlack+'일</span></div></div>'+
       cell("잔여 공수",roll.rnd(roll.remain)+'<small> M/M</small>','총 <b>'+roll.rnd(roll.total)+' M/M</b> · '+roll.remain+'/'+roll.total+' MD')+
-      '<div class="cell"><div class="l">진행률</div><div class="v">'+roll.progress+'<small>%</small></div><div class="progress"><div style="width:'+roll.progress+'%"></div></div></div>'+
       cell("크리티컬 패스",sc.critical.length+'<small> 개</small>',bnId?('병목 <b>'+bnId+' '+esc(bnName)+'</b>'):'—')+
       '<div class="cell warn"><div class="l">주의 필요</div><div class="v">'+attention+'<small> 건</small></div><div class="d2">보류 · CP 예정</div></div>'+
     '</div>';
