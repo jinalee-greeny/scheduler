@@ -121,7 +121,7 @@ table{width:100%;border-collapse:collapse}
 .tname{font-weight:600}
 .tname.editable{cursor:pointer;text-decoration:underline dotted #b8c0c8;text-underline-offset:3px}
 .tname.editable:hover{color:var(--acc)}
-.crittag{font-family:var(--mono);font-size:12px;background:var(--crit);color:#fff;border:0;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle;font-weight:700;letter-spacing:.03em}
+.crittag{font-family:var(--mono);font-size:11px;background:transparent;color:#c65b5b;border:1px solid #ecc8c8;padding:0 5px;border-radius:3px;margin-left:6px;vertical-align:middle;font-weight:600;letter-spacing:.03em}
 .role{color:#556;white-space:nowrap}
 .md{text-align:right;font-variant-numeric:tabular-nums;width:42px}
 .dates{color:#556;white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
@@ -469,7 +469,9 @@ body{color:var(--ink);background:
       <div class="field"><label>소요 (근무일)</label><input id="fDur" type="number" min="1" step="1"><div class="err" id="errDur"></div></div>
     </div>
     <div class="field"><label>상태</label><select id="fStatus"></select></div>
-    <div class="field"><label>담당자</label><div class="depbox" id="fAsg"></div></div>
+    <div class="field"><label>담당자</label><div class="depbox" id="fAsg"></div>
+      <div class="hrow" style="margin-top:6px"><input id="fNewPerson" placeholder="새 담당자 이름" style="flex:1"><button class="btn small" type="button" id="fPersonAdd">+ 인력 추가</button></div>
+    </div>
     <div class="field"><label>선행 태스크 (의존)</label><div class="depbox" id="fDeps"></div><div class="err" id="errDeps"></div></div>
   </div>
   <div class="mfoot">
@@ -591,7 +593,7 @@ function render(){
   populateRoleFilter();
   let attention=0;
   MODEL.tasks.forEach(t=>{if(t.status==="보류")attention++;else if(t.status==="예정"&&sc.task[t.id].critical)attention++;});
-  document.getElementById('assump').innerHTML='<b>가정</b> · 목표 오픈 <b>'+sc.target+'</b> = ASAP '+sc.asap+' + 버퍼 '+MODEL.settings.buffer_wd+'일 · 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영';
+  document.getElementById('assump').innerHTML='<b>기준</b> · 1 M/M = '+roll.mm+' MD · '+(mode==="off"?"주5일":"주7일")+' · 공휴일 반영';
   const dTot=Math.max(sc.dday,1), dWork=Math.max(dayn(D(MODEL.settings.today),D(sc.asap)),0);
   const wPct=Math.max(Math.min(dWork/dTot*100,100),2), bPct=Math.max(100-wPct,0);
   document.getElementById('kpis').innerHTML=
@@ -800,12 +802,24 @@ function openTask(id,presetPhase){
   document.getElementById('fMd').value=t?t.md:4;
   document.getElementById('fDur').value=t?t.dur:3;
   const asg=t?(t.assignees||[]):[];
-  document.getElementById('fAsg').innerHTML=MODEL.people.length?MODEL.people.map(p=>'<label><input type="checkbox" value="'+esc(p)+'"'+(asg.indexOf(p)>=0?' checked':'')+'><span>'+esc(p)+'</span></label>').join(''):'<div style="color:var(--sub);font-size:13px;padding:2px 4px">설정 → 인력(담당자)에서 먼저 추가하세요</div>';
+  renderFAsg(asg);
   const deps=t?t.deps:[];
   document.getElementById('fDeps').innerHTML=MODEL.tasks.filter(x=>!id||x.id!==id).sort(byWbs).map(x=>'<label><input type="checkbox" value="'+x.id+'"'+(deps.indexOf(x.id)>=0?' checked':'')+'><span><b>'+x.id+'</b> '+esc(x.name)+'</span></label>').join('');
   ["errId","errName","errMd","errDur","errDeps"].forEach(e=>document.getElementById(e).textContent="");
   document.getElementById('taskOverlay').classList.add('on');
 }
+function renderFAsg(checked){
+  document.getElementById('fAsg').innerHTML=MODEL.people.length?MODEL.people.map(p=>'<label><input type="checkbox" value="'+esc(p)+'"'+(checked.indexOf(p)>=0?' checked':'')+'><span>'+esc(p)+'</span></label>').join(''):'<div style="color:var(--sub);font-size:13px;padding:2px 4px">아직 등록된 인력이 없습니다 — 아래에서 바로 추가하세요</div>';
+}
+document.getElementById('fPersonAdd').onclick=()=>{
+  const inp=document.getElementById('fNewPerson'), name=inp.value.trim();
+  if(!name) return;
+  const checked=[...document.querySelectorAll('#fAsg input:checked')].map(c=>c.value);
+  if(MODEL.people.indexOf(name)<0){ snapshot(); MODEL.people.push(name); }
+  if(checked.indexOf(name)<0) checked.push(name);
+  renderFAsg(checked); inp.value=""; toast('인력 추가됨: '+name);
+};
+document.getElementById('fNewPerson').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('fPersonAdd').click(); } });
 function suggestId(phase){let mx=0;MODEL.tasks.forEach(t=>{const p=t.id.split('.');if(p[0]===String(phase))mx=Math.max(mx,Number(p[1]||0));});return phase+"."+(mx+1);}
 function hasCycle(tasks){
   const byId={};tasks.forEach(t=>byId[t.id]=t);const state={};
