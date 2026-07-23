@@ -181,19 +181,23 @@ table{width:100%;border-collapse:collapse}
 .cpsim-ctl{display:flex;align-items:center;gap:14px;font-size:13px;color:#556;flex-wrap:wrap;margin-bottom:16px}
 .cpsim-ctl b{color:var(--ink);font-family:var(--mono)}
 .cpsim-ctl input[type=range]{flex:1;min-width:200px;accent-color:var(--crit);cursor:pointer}
-.simstat{font-size:13px;font-weight:600;padding:10px 14px;border-radius:9px;margin-bottom:10px}
-.simstat.ok{background:#eaf7ef;color:#2f7a45}
-.simstat.bad{background:#fdeceb;color:#b42318}
-.simrow{display:flex;gap:10px;flex-wrap:wrap}
-.simcard{flex:1;min-width:150px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 15px}
-.simcard .l{font-size:11.5px;color:var(--sub);margin-bottom:5px}
-.simcard .v{font-size:18px;font-weight:700;font-family:var(--mono);font-variant-numeric:tabular-nums}
-.simcard .v small{font-size:12px;color:var(--sub);font-weight:600;margin-left:2px}
-.simcard .v .dlt{font-size:12px;font-weight:700;margin-left:6px}
-.simcard.warn{background:#fffaf2;border-color:#f0ddc0}.simcard.warn .v{color:#c2410c}
-.simcard.bad{background:#fff5f4;border-color:#f1cfcc}.simcard.bad .v{color:var(--crit)}
-.simbufbar{display:flex;gap:3px;margin-top:8px}
-.simbufbar i{flex:1;height:7px;border-radius:2px;background:#e7eaee}
+.simverdict{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:750;padding:13px 16px;border-radius:11px;margin-bottom:12px}
+.simverdict .ic{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:15px;font-weight:800;flex:none}
+.simverdict.ok{background:#eaf7ef;color:#237a43}.simverdict.ok .ic{background:var(--acc);color:#fff}
+.simverdict.bad{background:#fdeceb;color:#b42318}.simverdict.bad .ic{background:var(--crit);color:#fff}
+.simfacts{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.simfact{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;background:#fff}
+.simfact+.simfact{border-top:1px solid var(--line)}
+.simfact .fl{font-size:13px;color:var(--sub)}
+.simfact .fv{font-family:var(--mono);font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--ink)}
+.simfact .fv .from{color:#b6bcc3;font-weight:600}
+.simfact .fv .ar{color:#c3cad2}
+.simfact .fv .to.bad{color:var(--crit)}
+.simfact .fv .dlt{font-size:12.5px;font-weight:700;color:var(--crit)}
+.simfact .fv .keep{color:#237a43;font-size:13px;font-weight:700}
+.simfact .rem b{font-size:16px}.simfact .rem small{color:var(--sub);font-weight:600;font-size:12.5px}
+.simbufbar{display:flex;gap:3px;width:110px}
+.simbufbar i{flex:1;height:9px;border-radius:2px;background:#e7eaee}
 .simbufbar i.used{background:var(--crit)}
 .simbufbar i.left{background:var(--acc)}
 /* modal */
@@ -624,23 +628,22 @@ function simCP(d){
   const sd=v=>{const p=v.split('-');return (+p[1])+'/'+(+p[2]);};
   const S=C.slack;
   document.getElementById('simDval').textContent=d;
-  const newAsap=cpAddWd(C.asap,d);
-  let openISO=C.target,remain=Math.max(0,S-d),slip=0,ok=d<=S;
-  if(!ok){slip=d-S;openISO=cpAddWd(C.target,slip);remain=0;}
-  const stat=ok
-    ? '<div class="simstat ok">버퍼 내 흡수 — 오픈일 '+sd(C.target)+' 유지 (여유 '+remain+'일 남음)</div>'
-    : '<div class="simstat bad">버퍼 소진 — 오픈일이 '+slip+' 근무일 밀려 '+sd(openISO)+'</div>';
-  const openCls=ok?'':'bad';
-  const openDlt=ok?'':'<span class="dlt">+'+slip+'d</span>';
-  const remCls=remain===0?'bad':(remain<=2?'warn':'');
-  const bufN=Math.max(S,d),bufBar=Array.from({length:bufN},(_,i)=>
-    i<Math.min(d,S)?'<i class="used"></i>':(i<S?'<i class="left"></i>':'<i class="used"></i>')).join('');
-  document.getElementById('simOut').innerHTML=stat+
-    '<div class="simrow">'+
-      '<div class="simcard '+openCls+'"><div class="l">예상 오픈일</div><div class="v">'+sd(openISO)+openDlt+'</div></div>'+
-      '<div class="simcard '+remCls+'"><div class="l">남은 여유</div><div class="v">'+remain+'<small>일</small></div>'+
-        '<div class="simbufbar">'+bufBar+'</div></div>'+
-      '<div class="simcard"><div class="l">ASAP 완료(지연 반영)</div><div class="v">'+sd(newAsap)+'</div></div>'+
+  const ok=d<=S, remain=Math.max(0,S-d), slip=ok?0:d-S;
+  const openISO=ok?C.target:cpAddWd(C.target,slip);
+  const verdict=ok
+    ? '<div class="simverdict ok"><span class="ic">✓</span>목표 오픈일 유지</div>'
+    : '<div class="simverdict bad"><span class="ic">!</span>목표 오픈일 '+slip+'일 지연</div>';
+  const openFv=ok
+    ? '<span class="fv"><b>'+sd(C.target)+'</b> <span class="keep">그대로</span></span>'
+    : '<span class="fv"><s class="from">'+sd(C.target)+'</s><span class="ar">→</span><b class="to bad">'+sd(openISO)+'</b><span class="dlt">+'+slip+'일</span></span>';
+  const used=Math.min(d,S);
+  const bar=Array.from({length:S},(_,i)=>i<used?'<i class="used"></i>':'<i class="left"></i>').join('');
+  document.getElementById('simOut').innerHTML=verdict+
+    '<div class="simfacts">'+
+      '<div class="simfact"><span class="fl">목표 오픈일</span>'+openFv+'</div>'+
+      '<div class="simfact"><span class="fl">남은 여유(버퍼)</span>'+
+        '<span class="fv"><span class="simbufbar">'+bar+'</span>'+
+        '<span class="rem"><b>'+remain+'</b><small> / '+S+'일</small></span></span></div>'+
     '</div>';
 }
 
