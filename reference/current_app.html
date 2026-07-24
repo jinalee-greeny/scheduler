@@ -185,7 +185,12 @@ table{width:100%;border-collapse:collapse}
 .cpsim-sub{font-size:12px;color:#8a919b;margin:0 0 14px}
 .cpsim-ctl{display:flex;align-items:center;gap:14px;font-size:13px;color:#556;flex-wrap:wrap;margin-bottom:16px}
 .cpsim-ctl b{color:var(--ink);font-family:var(--mono)}
-.cpsim-ctl input[type=range]{flex:1;min-width:200px;accent-color:var(--crit);cursor:pointer}
+.cpsim-ctl input[type=range]{flex:1;min-width:150px;accent-color:var(--crit);cursor:pointer}
+.cpsim-ctl .simlab{color:#8a919b;font-weight:600;min-width:34px}
+.cpsim-ctl select{flex:1;min-width:150px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;color:var(--ink);cursor:pointer;font-family:inherit}
+.simpbar{width:110px;height:9px;border-radius:3px;background:#e7eaee;overflow:hidden}
+.simpbar>i{display:block;height:100%;background:var(--acc)}
+.simpbar>i.over{background:var(--crit)}
 .simverdict{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:750;padding:13px 16px;border-radius:11px;margin-bottom:12px}
 .simverdict .ic{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:15px;font-weight:800;flex:none}
 .simverdict.ok{background:#eaf7ef;color:#237a43}.simverdict.ok .ic{background:var(--acc);color:#fff}
@@ -510,8 +515,9 @@ body{color:var(--ink);background:
   <div class="cp-right">
     <div class="cpsim">
       <div class="cpsim-hd">지연 시뮬레이션</div>
-      <p class="cpsim-sub">크리티컬 체인이 지연될 때 오픈일 영향을 시뮬레이션합니다. 슬라이더를 움직여 보세요.</p>
-      <div class="cpsim-ctl">지연 <b><span id="simDval">0</span> 근무일</b><input type="range" id="simRange" min="0" max="15" value="0" oninput="simCP(this.value)"></div>
+      <p class="cpsim-sub">특정 작업이 지연되면 오픈일이 어떻게 되는지 실험해 보세요. (작업마다 버틸 수 있는 여유가 다릅니다)</p>
+      <div class="cpsim-ctl"><label class="simlab">작업</label><select id="simTask" onchange="simWhatIf()"></select></div>
+      <div class="cpsim-ctl"><label class="simlab">지연</label><b><span id="simDval">0</span> 근무일</b><input type="range" id="simRange" min="0" max="20" value="0" oninput="simWhatIf()"></div>
       <div class="cpsim-out" id="simOut"></div>
     </div>
   </div>
@@ -639,38 +645,43 @@ function cpAddWd(startISO,n){
   const isW=dt=>{if(hol.has(iso(dt)))return false;if(mode==="off"&&(dt.getDay()===0||dt.getDay()===6))return false;return true;};
   let x=D(startISO),c=0,s=n>=0?1:-1;while(c<Math.abs(n)){x=addDays(x,s);if(isW(x))c++;}return iso(x);
 }
-function simCP(d){
-  d=+d;const C=window.CPSIM;if(!C)return;
-  const sd=v=>{const p=v.split('-');return (+p[1])+'/'+(+p[2]);};
-  const S=C.slack;
+// 특정 작업을 d 근무일 지연 → 목표일(고정) 대비 영향 (작업별 여유 기준)
+function simWhatIf(){
+  const C=window.CPSIM;if(!C)return;
+  const sel=document.getElementById('simTask'),rng=document.getElementById('simRange');
+  if(!sel||!rng)return;
+  const id=sel.value,d=+rng.value;
   document.getElementById('simDval').textContent=d;
-  const ok=d<=S, remain=Math.max(0,S-d), slip=ok?0:d-S;
-  const openISO=ok?C.target:cpAddWd(C.target,slip);
-  const newAsap=cpAddWd(C.asap,d);
+  const out=document.getElementById('simOut');
+  const t=MODEL.tasks.find(x=>x.id===id);
+  if(!t){out.innerHTML='';return;}
+  const sd=v=>{const p=(v||'').split('-');return (+p[1])+'/'+(+p[2]);};
+  const ts=(C.tslack[id]==null?0:C.tslack[id]);   // 이 작업의 여유(오픈일 안 밀고 버티는 근무일)
+  const ok=d<=ts, slip=ok?0:d-ts;
+  const baseOpen=C.target, newOpen=ok?baseOpen:cpAddWd(baseOpen,slip);
+  const baseEf=C.tef[id], newEf=baseEf?cpAddWd(baseEf,d):null;
   const verdict=ok
     ? '<div class="simverdict ok"><span class="ic">✓</span>목표 오픈일 유지</div>'
     : '<div class="simverdict bad"><span class="ic">!</span>목표 오픈일 '+slip+'일 지연</div>';
-  // 값 = 전→후 화살표 (변화 없으면 '그대로')
   const arrow=(from,to,changed,dlt,toCls)=>changed
     ? '<span class="fv"><s class="from">'+from+'</s><span class="ar">→</span><b class="to '+(toCls||'')+'">'+to+'</b>'+(dlt||'')+'</span>'
     : '<span class="fv"><b>'+from+'</b> <span class="keep">그대로</span></span>';
-  const openFv=arrow(sd(C.target),sd(openISO),!ok,'<span class="dlt">+'+slip+'일</span>','bad');
-  const asapFv=arrow(sd(C.asap),sd(newAsap),d>0,'','');
-  let bufFv;
-  if(S===0){bufFv='<span class="fv"><span class="nobuf">버퍼 없음</span></span>';}
-  else{const used=Math.min(d,S),pct=Math.round(used/S*100);
-    const bar=Array.from({length:S},(_,i)=>i<used?'<i class="used"></i>':'<i class="left"></i>').join('');
-    bufFv='<span class="fv"><span class="simbufbar">'+bar+'</span><span class="rem"><b>'+remain+'</b><small> / '+S+'일 · 소진 '+pct+'%</small></span></span>';}
+  const openFv=arrow(sd(baseOpen),sd(newOpen),!ok,'<span class="dlt">+'+slip+'일</span>','bad');
+  const efFv=baseEf?arrow(sd(baseEf),sd(newEf),d>0,'',''):'<span class="fv">—</span>';
+  const usedPct=ts>0?Math.min(d/ts*100,100):(d>0?100:0);
+  const tRemain=Math.max(0,ts-d);
+  const tbarFv='<span class="fv"><span class="simpbar"><i class="'+(d>=ts?'over':'')+'" style="width:'+usedPct.toFixed(0)+'%"></i></span>'+
+    '<span class="rem"><b>'+tRemain+'</b><small> / '+ts+'일 남음</small></span></span>';
   const fact=(l,m,fv)=>'<div class="simfact"><div class="sfl"><span class="fl">'+l+'</span><span class="sfm">'+m+'</span></div>'+fv+'</div>';
   let hint;
-  if(S===0)hint='<div class="simhint bad">버퍼가 없어 <b>어떤 지연도 즉시 오픈일에 반영</b>됩니다.</div>';
-  else if(ok)hint='<div class="simhint ok">아직 <b>'+remain+' 근무일</b> 흡수 가능 · <b>'+(S+1)+'번째 근무일</b> 지연부터 오픈일이 밀리기 시작합니다.</div>';
-  else hint='<div class="simhint bad">버퍼('+S+' 근무일)를 <b>'+slip+' 근무일 초과</b> → 오픈일 <b>'+slip+'일</b> 지연.</div>';
-  document.getElementById('simOut').innerHTML=verdict+
+  if(ts===0)hint='<div class="simhint bad">이 작업은 <b>여유가 없어</b>(크리티컬) 하루만 밀려도 오픈일이 그대로 밀립니다.</div>';
+  else if(ok)hint='<div class="simhint ok">이 작업은 <b>'+ts+' 근무일</b>까지 밀려도 오픈일 영향 없어요 · <b>'+(ts+1)+'번째 근무일</b>부터 밀리기 시작합니다.</div>';
+  else hint='<div class="simhint bad">이 작업 여유(<b>'+ts+'일</b>)를 <b>'+(d-ts)+' 근무일 초과</b> → 오픈일 <b>'+slip+'일</b> 지연.</div>';
+  out.innerHTML=verdict+
     '<div class="simfacts">'+
-      fact('목표 오픈일','커밋한 오픈 날짜 (여유 소진 후 밀림)',openFv)+
-      fact('ASAP 완료','체인이 가장 빨리 끝나는 날 (지연 반영)',asapFv)+
-      fact('남은 여유(버퍼)','오픈일 안 밀고 흡수 가능한 근무일',bufFv)+
+      fact('목표 오픈일','이 작업 지연 반영 후 오픈 날짜',openFv)+
+      fact('이 작업 완료','이 작업 자체가 끝나는 날',efFv)+
+      fact('이 작업 여유(slack)','오픈일 안 밀고 버틸 수 있는 한계',tbarFv)+
     '</div>'+hint;
 }
 
@@ -834,8 +845,17 @@ function render(){
       '<div class="cpmeta">'+esc(rl[c]||'')+' · <b>'+md[c]+'</b>MD'+(dates?(' · '+dates):'')+'</div></div>'+
     '</div>';
   }).join('');
-  window.CPSIM={target:sc.target,asap:sc.asap,slack:sc.minSlack};
-  var _sr=document.getElementById('simRange');simCP(_sr?_sr.value:0);
+  // 지연 시뮬 기준값(what-if): 목표일 고정 + 작업별 여유(slack)·완료일
+  const tslack={},tef={};MODEL.tasks.forEach(t=>{const st=sc.task[t.id]||{};tslack[t.id]=st.slack;tef[t.id]=st.ef||null;});
+  window.CPSIM={target:sc.target,asap:sc.asap,slack:sc.minSlack,tslack:tslack,tef:tef};
+  const _sel=document.getElementById('simTask');
+  if(_sel){const prev=_sel.value;
+    const inc=MODEL.tasks.filter(t=>t.status!=='완료');
+    _sel.innerHTML=inc.map(t=>'<option value="'+t.id+'">'+t.id+' '+esc(t.name)+'</option>').join('');
+    let def=prev&&_sel.querySelector('option[value="'+prev+'"]')?prev:((inc.find(t=>t.status==='진행중')||inc[0]||{}).id);
+    if(def)_sel.value=def;
+    simWhatIf();
+  }
 
   renderList(sc,roll,PM); renderKanban(sc,PM);
 
