@@ -157,22 +157,25 @@ table{width:100%;border-collapse:collapse}
 .mmbar{background:#eef0f2;border-radius:4px;height:8px;overflow:hidden;min-width:80px}
 .mmbar>div{height:100%}
 .mm-total{margin-top:12px;font-size:13px;color:#556}.mm-total b{color:var(--ink);font-size:18px}
-.cpwrap{display:flex;flex-direction:column}
-.cpstep{display:flex;gap:14px}
-.cpstep .rail{position:relative;width:12px;flex:none}
-.cpstep .rail::before{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;background:#e7eaee}
-.cpstep:first-child .rail::before{top:11px}
-.cpstep:last-child .rail::before{height:11px;bottom:auto}
-.cpdot{position:absolute;left:0;top:9px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid #c3cad2;z-index:1}
-.cpstep.done .cpdot{background:#c3cad2;border-color:#c3cad2}
-.cpstep.cur .cpdot{background:var(--acc);border-color:var(--acc);box-shadow:0 0 0 4px rgba(78,203,106,.16)}
-.cpbody{flex:1;padding:2px 0 13px}
-.cpname{font-size:14px;font-weight:650;color:var(--ink)}
-.cpname .id{font-family:var(--mono);color:#b0b6bd;margin-right:7px;font-weight:600;font-size:13px}
-.cpstep.cur .cpbody{background:rgba(78,203,106,.07);border-radius:8px;margin:-2px -8px 6px;padding:6px 8px 8px}
-.cpmeta{font-family:var(--mono);font-size:12px;color:#8a919b;margin-top:3px}
-.cpmeta b{color:#5b6470;font-weight:600}
-.cptag{display:inline-block;margin-left:8px;background:var(--acc);color:#fff;border-radius:5px;padding:1px 7px;font:700 11px/1.55 var(--mono);vertical-align:1px}
+/* CP 가로 미니 간트 */
+.cpwrap{position:relative}
+.cpg-ax{position:relative;height:15px;margin-left:200px;font:600 10.5px var(--mono);color:#9aa3ab;margin-bottom:5px}
+.cpg-ax span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.cpg-rows{position:relative}
+.cpg-row{display:flex;align-items:center;height:26px}
+.cpg-lab{width:200px;flex:none;font-size:12.5px;padding-right:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.cpg-lab .id{font-family:var(--mono);color:#b0b6bd;font-size:11.5px;margin-right:6px}
+.cpg-lab.cur{color:#237a43;font-weight:650}
+.cpg-lab .now{background:var(--acc);color:#fff;border-radius:4px;padding:0 5px;font:700 10px/1.6 var(--mono);margin-left:6px}
+.cpg-track{position:relative;flex:1;height:100%}
+.cpg-track::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#f0f2f4}
+.cpg-bar{position:absolute;top:50%;transform:translateY(-50%);height:14px;border-radius:4px;background:#a9e4b7;min-width:4px}
+.cpg-bar.cur{background:var(--acc);box-shadow:0 0 0 3px rgba(78,203,106,.18)}
+.cpg-ov{position:absolute;left:200px;right:0;top:0;bottom:0;pointer-events:none}
+.cpg-buf{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#4ecb6a 0 1.5px,#eef7f0 1.5px 7px);opacity:.55}
+.cpg-today{position:absolute;top:-3px;bottom:-3px;width:0;border-left:2px dashed #e8930c}
+.cpg-foot{position:relative;height:14px;margin-left:200px;margin-top:6px;font:600 10.5px var(--mono);color:#8a919b}
+.cpg-foot span{position:absolute;white-space:nowrap}
 /* CP 지연 시뮬레이션 */
 .cpsim{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
 .cpsim-hd{font-size:13px;font-weight:700;color:#3d434b;margin-bottom:4px;display:flex;align-items:center;gap:8px}
@@ -196,6 +199,7 @@ table{width:100%;border-collapse:collapse}
 .simfact .fv .dlt{font-size:12.5px;font-weight:700;color:var(--crit)}
 .simfact .fv .keep{color:#237a43;font-size:13px;font-weight:700}
 .simfact .rem b{font-size:16px}.simfact .rem small{color:var(--sub);font-weight:600;font-size:12.5px}
+.simfact .nobuf{font-family:-apple-system,sans-serif;font-size:12.5px;font-weight:600;color:#b42318}
 .simbufbar{display:flex;gap:3px;width:110px}
 .simbufbar i{flex:1;height:9px;border-radius:2px;background:#e7eaee}
 .simbufbar i.used{background:var(--crit)}
@@ -638,12 +642,13 @@ function simCP(d){
     : '<span class="fv"><s class="from">'+sd(C.target)+'</s><span class="ar">→</span><b class="to bad">'+sd(openISO)+'</b><span class="dlt">+'+slip+'일</span></span>';
   const used=Math.min(d,S);
   const bar=Array.from({length:S},(_,i)=>i<used?'<i class="used"></i>':'<i class="left"></i>').join('');
+  const bufFv = S===0
+    ? '<span class="fv"><span class="nobuf">버퍼 없음 · 지연 시 즉시 오픈일 반영</span></span>'
+    : '<span class="fv"><span class="simbufbar">'+bar+'</span><span class="rem"><b>'+remain+'</b><small> / '+S+'일</small></span></span>';
   document.getElementById('simOut').innerHTML=verdict+
     '<div class="simfacts">'+
       '<div class="simfact"><span class="fl">목표 오픈일</span>'+openFv+'</div>'+
-      '<div class="simfact"><span class="fl">남은 여유(버퍼)</span>'+
-        '<span class="fv"><span class="simbufbar">'+bar+'</span>'+
-        '<span class="rem"><b>'+remain+'</b><small> / '+S+'일</small></span></span></div>'+
+      '<div class="simfact"><span class="fl">남은 여유(버퍼)</span>'+bufFv+'</div>'+
     '</div>';
 }
 
@@ -796,17 +801,24 @@ function render(){
 
   document.getElementById('cpcount').textContent='('+sc.critical.length+'단계 · 여유 '+sc.minSlack+'일)';
   const nm={},stt={},rl={},md={};MODEL.tasks.forEach(t=>{nm[t.id]=t.name;stt[t.id]=t.status;rl[t.id]=t.role;md[t.id]=t.md;});
-  document.getElementById('cpwrap').innerHTML=sc.critical.map(c=>{
-    const s=sc.task[c]||{},status=stt[c]||'예정';
-    const cls=status==='진행중'?'cur':(status==='완료'?'done':'');
-    const dates=(s.es&&s.ef)?(shortD(s.es)+'→'+shortD(s.ef)):'';
-    const tag=status==='진행중'?'<span class="cptag">현재</span>':'';
-    return '<div class="cpstep '+cls+'">'+
-      '<div class="rail"><span class="cpdot"></span></div>'+
-      '<div class="cpbody"><div class="cpname"><span class="id">'+c+'</span>'+esc(nm[c])+tag+'</div>'+
-      '<div class="cpmeta">'+esc(rl[c]||'')+' · <b>'+md[c]+'</b>MD'+(dates?(' · '+dates):'')+'</div></div>'+
-    '</div>';
+  // 가로 미니 간트 (x축 = 시작→목표오픈)
+  const gS=D(sc.projStart),gE=D(sc.target),gToday=D(MODEL.settings.today),gAsap=D(sc.asap);
+  const gspan=Math.max(dayn(gS,gE),1);
+  const gpos=dt=>Math.min(Math.max(dayn(gS,dt)/gspan*100,0),100);
+  const cgRows=sc.critical.map(c=>{
+    const s=sc.task[c]||{},cur=stt[c]==='진행중';
+    const es=s.es?D(s.es):gS, ef=s.ef?D(s.ef):es;
+    const l=gpos(es), w=Math.max((dayn(es,ef)+1)/gspan*100,0.8);
+    return '<div class="cpg-row"><div class="cpg-lab'+(cur?' cur':'')+'"><span class="id">'+c+'</span>'+esc(nm[c])+(cur?'<span class="now">현재</span>':'')+'</div>'+
+      '<div class="cpg-track"><div class="cpg-bar'+(cur?' cur':'')+'" style="left:'+l.toFixed(1)+'%;width:'+w.toFixed(1)+'%" title="'+esc(rl[c]||'')+' · '+md[c]+'MD · '+(s.es?shortD(s.es):'')+'→'+(s.ef?shortD(s.ef):'')+'"></div></div></div>';
   }).join('');
+  let cgAxh='';for(let i=0;i<=4;i++){const dt=addDays(gS,Math.round(gspan*i/4));cgAxh+='<span style="left:'+(i*25)+'%">'+shortD(iso(dt))+'</span>';}
+  const bufL=gpos(gAsap),bufW=Math.max(dayn(gAsap,gE)/gspan*100,0),todayL=gpos(gToday);
+  const cgOv='<div class="cpg-ov">'+(bufW>0?'<div class="cpg-buf" style="left:'+bufL.toFixed(1)+'%;width:'+bufW.toFixed(1)+'%" title="버퍼"></div>':'')+
+    '<div class="cpg-today" style="left:'+todayL.toFixed(1)+'%"></div></div>';
+  const cgFoot='<div class="cpg-foot"><span style="left:'+gpos(gAsap).toFixed(1)+'%;transform:translateX(-50%);color:#5b6470">ASAP '+shortD(sc.asap)+'</span>'+
+    '<span style="left:100%;transform:translateX(-100%);color:#5b6470">오픈 '+shortD(sc.target)+'</span></div>';
+  document.getElementById('cpwrap').innerHTML='<div class="cpg-ax">'+cgAxh+'</div><div class="cpg-rows">'+cgRows+cgOv+'</div>'+cgFoot;
   window.CPSIM={target:sc.target,asap:sc.asap,slack:sc.minSlack};
   var _sr=document.getElementById('simRange');simCP(_sr?_sr.value:0);
 
