@@ -216,7 +216,19 @@ table{width:100%;border-collapse:collapse}
 .simhint{margin-top:11px;font-size:12px;font-weight:600;padding:10px 13px;border-radius:9px;line-height:1.55}
 .simhint.ok{background:#f1f7f3;color:#3d6b4a}
 .simhint.bad{background:#fdf1f0;color:#9a3b32}
+.simhint.rc{background:#eef4fd;color:#28517d}
 .simhint b{font-weight:750}
+/* 민감도 보드: 작업별 여유 랭킹 칩 */
+.sens-hd{font-size:12px;font-weight:700;color:#3d434b;margin:0 0 8px}
+.sens-hd em{font-style:normal;color:#9aa3ab;font-weight:500}
+.sensboard{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.schip{border:1.5px solid transparent;border-radius:7px;padding:4px 9px;font:600 11.5px var(--mono);cursor:pointer;display:inline-flex;gap:5px;align-items:center;font-family:var(--mono)}
+.schip b{font-weight:750}
+.schip.r{background:#fdeceb;color:#b42318}
+.schip.a{background:#fdf3e3;color:#b45309}
+.schip.g{background:#eaf7ef;color:#237a43}
+.schip.on{border-color:currentColor}
+.simactions{margin-top:11px;display:flex;justify-content:flex-end}
 /* modal */
 .overlay{display:none;position:fixed;inset:0;background:rgba(20,25,32,.44);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
 .overlay.on{display:flex}
@@ -516,6 +528,8 @@ body{color:var(--ink);background:
     <div class="cpsim">
       <div class="cpsim-hd">지연 시뮬레이션</div>
       <p class="cpsim-sub">특정 작업이 지연되면 오픈일이 어떻게 되는지 실험해 보세요. (작업마다 버틸 수 있는 여유가 다릅니다)</p>
+      <div class="sens-hd">작업별 여유 한눈에 <em>— 빨강일수록 위험 · 클릭하면 아래 시뮬에 적용</em></div>
+      <div class="sensboard" id="sensBoard"></div>
       <div class="cpsim-ctl"><label class="simlab">작업</label><select id="simTask" onchange="simWhatIf()"></select></div>
       <div class="cpsim-ctl"><label class="simlab">지연</label><b><span id="simDval">0</span> 근무일</b><input type="range" id="simRange" min="0" max="20" value="0" oninput="simWhatIf()"></div>
       <div class="cpsim-out" id="simOut"></div>
@@ -655,6 +669,7 @@ function simWhatIf(){
   const out=document.getElementById('simOut');
   const t=MODEL.tasks.find(x=>x.id===id);
   if(!t){out.innerHTML='';return;}
+  document.querySelectorAll('#sensBoard .schip').forEach(b=>b.classList.toggle('on',b.dataset.sid===id));
   const sd=v=>{const p=(v||'').split('-');return (+p[1])+'/'+(+p[2]);};
   const ts=(C.tslack[id]==null?0:C.tslack[id]);   // 이 작업의 여유(오픈일 안 밀고 버티는 근무일)
   const ok=d<=ts, slip=ok?0:d-ts;
@@ -677,12 +692,32 @@ function simWhatIf(){
   if(ts===0)hint='<div class="simhint bad">이 작업은 <b>여유가 없어</b>(크리티컬) 하루만 밀려도 오픈일이 그대로 밀립니다.</div>';
   else if(ok)hint='<div class="simhint ok">이 작업은 <b>'+ts+' 근무일</b>까지 밀려도 오픈일 영향 없어요 · <b>'+(ts+1)+'번째 근무일</b>부터 밀리기 시작합니다.</div>';
   else hint='<div class="simhint bad">이 작업 여유(<b>'+ts+'일</b>)를 <b>'+(d-ts)+' 근무일 초과</b> → 오픈일 <b>'+slip+'일</b> 지연.</div>';
+  // 회복 시나리오: 오픈일이 밀릴 때, 주말 근무 ON이면 회복되는지 (현재 주5일 모드일 때만)
+  let rec='';
+  if(!ok&&mode==='off'){
+    const orig=t.dur;let scOn;
+    try{t.dur=orig+d;scOn=compute('on');}finally{t.dur=orig;}
+    rec=(scOn.asap<=C.target)
+      ? '<div class="simhint rc">회복 옵션 — <b>주말 근무 ON</b> 전환 시 완료 <b>'+sd(scOn.asap)+'</b> → 목표 오픈일 <b>'+sd(C.target)+' 회복 가능</b></div>'
+      : '<div class="simhint bad">주말 근무 ON으로도 회복 불가 · 완료 <b>'+sd(scOn.asap)+'</b> — 범위 축소나 인력 보강 검토 필요</div>';
+  }
+  // 실제 반영: 시뮬이 현실이 됐을 때 기간을 모델에 적용
+  const act=d>0?'<div class="simactions"><button type="button" class="btn small" onclick="applyDelay()">'+id+' 기간 +'+d+'일, 실제 일정에 반영</button></div>':'';
   out.innerHTML=verdict+
     '<div class="simfacts">'+
       fact('목표 오픈일','이 작업 지연 반영 후 오픈 날짜',openFv)+
       fact('이 작업 완료','이 작업 자체가 끝나는 날',efFv)+
       fact('이 작업 여유(slack)','오픈일 안 밀고 버틸 수 있는 한계',tbarFv)+
-    '</div>'+hint;
+    '</div>'+hint+rec+act;
+}
+// 시뮬 지연을 실제 모델에 반영 (기간 연장 · 되돌리기 지원)
+function applyDelay(){
+  const sel=document.getElementById('simTask'),rng=document.getElementById('simRange');
+  if(!sel||!rng)return;
+  const t=MODEL.tasks.find(x=>x.id===sel.value),d=+rng.value;
+  if(!t||d<=0)return;
+  snapshot();t.dur+=d;stampEdit();rng.value=0;render();
+  toast(t.id+' 기간 +'+d+' 근무일 반영됨 · 편집 모드의 되돌리기로 취소 가능');
 }
 
 // ---------- engine (wbs_calc.py 이식) ----------
@@ -854,6 +889,16 @@ function render(){
     _sel.innerHTML=inc.map(t=>'<option value="'+t.id+'">'+t.id+' '+esc(t.name)+'</option>').join('');
     let def=prev&&_sel.querySelector('option[value="'+prev+'"]')?prev:((inc.find(t=>t.status==='진행중')||inc[0]||{}).id);
     if(def)_sel.value=def;
+    // 민감도 보드: 여유 오름차순(위험한 순)
+    const _sb=document.getElementById('sensBoard');
+    if(_sb){
+      const arr=inc.map(t=>({id:t.id,name:t.name,s:(tslack[t.id]==null?0:tslack[t.id])}))
+        .sort((a,b)=>(a.s-b.s)||(a.id<b.id?-1:1));
+      _sb.innerHTML=arr.map(o=>{const cls=o.s<=0?'r':(o.s<=3?'a':'g');
+        return '<button type="button" class="schip '+cls+'" data-sid="'+o.id+'" title="'+esc(o.name)+' · 여유 '+o.s+'일">'+o.id+'<b>'+o.s+'일</b></button>';}).join('');
+      _sb.onclick=e=>{const btn=e.target.closest('.schip');if(!btn)return;
+        _sel.value=btn.dataset.sid;simWhatIf();};
+    }
     simWhatIf();
   }
 
