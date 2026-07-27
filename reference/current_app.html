@@ -278,6 +278,16 @@ table{width:100%;border-collapse:collapse}
 .avatar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;flex:none;box-shadow:0 1px 1px rgba(0,0,0,.12)}
 .rolechip{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .rolechip>span:last-child{color:#4b5563}
+/* 역할 설명 툴팁 (data-rtip) */
+.rolechip[data-rtip],.rtip[data-rtip]{position:relative;cursor:help}
+.rolechip[data-rtip]:hover::after,.rtip[data-rtip]:hover::after{
+  content:attr(data-rtip);position:absolute;bottom:calc(100% + 7px);left:0;
+  background:#1c2126;color:#fff;padding:6px 11px;border-radius:7px;
+  font-size:11.5px;font-weight:600;line-height:1.5;letter-spacing:0;white-space:nowrap;
+  z-index:60;box-shadow:0 6px 20px rgba(20,25,32,.24);pointer-events:none}
+.rolechip[data-rtip]:hover::before,.rtip[data-rtip]:hover::before{
+  content:"";position:absolute;bottom:calc(100% + 2px);left:13px;
+  border:5px solid transparent;border-top-color:#1c2126;z-index:60;pointer-events:none}
 /* ===== list view ===== */
 .listtbl th,.listtbl td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:middle}
 .listtbl thead th{background:#f3f4f6;font-family:var(--mono);letter-spacing:.04em;font-size:12px;color:var(--sub);font-weight:600}
@@ -629,10 +639,23 @@ let kdrag=null, suppressClick=false;   // 칸반 포인터 드래그 상태
 const undoStack=[];
 
 // ---------- view helpers (visual layer only) ----------
+// 역할 약어 설명(호버 툴팁)
+const ROLE_DESC={
+  "기획/PM":"기획·프로젝트 매니지먼트 — 요구사항 정의·일정 관리",
+  "UX":"UX 디자인 — IA·화면설계·프로토타입",
+  "UI":"UI 디자인 — 비주얼 컨셉·디자인 시스템·본 화면",
+  "퍼블":"퍼블리싱 — HTML/CSS 마크업·스타일 구현",
+  "FE":"프론트엔드 개발 — 화면 기능·상태관리 구현",
+  "BE":"백엔드 개발 — 서버·API·DB·인증",
+  "FE/BE":"프론트+백엔드 공동 — 시스템 통합 작업",
+  "QA":"품질 보증 — 통합 테스트·버그 검증",
+  "기획/QA":"기획+QA 공동 — UAT(사용자 검수)",
+  "전체":"전 직군 공동 — 오픈·안정화 모니터링"};
+const roleTip=r=>ROLE_DESC[r]||r;
 const roleInitial=r=>(r||"?").trim().charAt(0);
 const roleColor=r=>{let h=0;for(let i=0;i<(r||"").length;i++)h=(h*31+r.charCodeAt(i))%360;return "hsl("+h+",50%,44%)";};
-const avatar=r=>'<span class="avatar" style="background:'+roleColor(r)+'" title="'+esc(r)+'">'+esc(roleInitial(r))+'</span>';
-const roleCell=r=>'<span class="rolechip">'+avatar(r)+'<span>'+esc(r)+'</span></span>';
+const avatar=r=>'<span class="avatar" style="background:'+roleColor(r)+'">'+esc(roleInitial(r))+'</span>';
+const roleCell=r=>'<span class="rolechip" data-rtip="'+esc(roleTip(r))+'">'+avatar(r)+'<span>'+esc(r)+'</span></span>';
 const asgHtml=t=>{const a=t.assignees||[];return a.length?'<span class="asg">'+esc(a.join(', '))+'</span>':'';};
 const progOf=s=>s==="완료"?100:(s==="진행중"?50:0);
 const STATUS_CYCLE=["예정","진행중","완료"];  // 뱃지 클릭 시 순환하는 주 상태(보류·취소는 모달에서)
@@ -868,7 +891,7 @@ function render(){
     pht+='<tr><td><span class="pdot" style="background:'+p.color+'"></span>'+esc(p.name)+'</td><td class="num">'+v+'</td><td class="num">'+roll.rnd(v)+'</td><td><div class="mmbar"><div style="width:'+(roll.total?v/roll.total*100:0).toFixed(1)+'%;background:'+p.color+'"></div></div></td></tr>';});
   document.getElementById('mmphase').innerHTML='<tr><td>단계</td><td class="num">MD</td><td class="num">M/M</td><td></td></tr>'+pht;
   let rlt="";Object.keys(roll.rl).sort((a,b)=>roll.rl[b]-roll.rl[a]).forEach(r=>{const v=roll.rl[r];
-    rlt+='<tr><td>'+esc(r)+'</td><td class="num">'+v+'</td><td class="num">'+roll.rnd(v)+'</td><td><div class="mmbar"><div style="width:'+(v/maxr*100).toFixed(1)+'%;background:var(--acc)"></div></div></td></tr>';});
+    rlt+='<tr><td><span class="rtip" data-rtip="'+esc(roleTip(r))+'">'+esc(r)+'</span></td><td class="num">'+v+'</td><td class="num">'+roll.rnd(v)+'</td><td><div class="mmbar"><div style="width:'+(v/maxr*100).toFixed(1)+'%;background:var(--acc)"></div></div></td></tr>';});
   document.getElementById('mmrole').innerHTML='<tr><td>역할</td><td class="num">MD</td><td class="num">M/M</td><td></td></tr>'+rlt;
   document.getElementById('mmtot').innerHTML=roll.total+' MD = '+roll.rnd(roll.total)+' M/M';
   document.getElementById('mmrolenote').innerHTML='완료 '+roll.rnd(roll.done)+' M/M ('+roll.progress+'%) · 잔여 <b>'+roll.rnd(roll.remain)+' M/M</b>';
