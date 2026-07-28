@@ -676,6 +676,9 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
 .ubtn.on{background:#f2f4f7;color:var(--ink);font-weight:650}
 .ubtn.sq{width:34px;padding:0;justify-content:center}
 @media(max-width:1080px){.ubtn .ulab{display:none}.ubtn{width:34px;padding:0;justify-content:center}}
+.emptyrow{padding:26px 18px!important;color:var(--sub);font-size:13.5px;text-align:center}
+.emptyrow b{color:var(--ink);font-weight:650}
+.emptyrow .btn{margin-left:8px;vertical-align:-1px}
 /* glass overrides (must follow base) */
 .projsel{background:var(--glass-2);border:1px solid var(--gbrd)}
 .projsel:hover{background:rgba(255,255,255,.75)}
@@ -937,7 +940,7 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
       <div class="npopt">
         <label><input type="radio" name="npseed" value="tpl" checked><span><b>기본 WBS 템플릿</b><small>준비·기획 → UX → UI → 퍼블·프론트 → 백엔드 → 통합·QA → 오픈 (22개 태스크, 모두 예정)</small></span></label>
         <label><input type="radio" name="npseed" value="clone"><span><b>현재 프로젝트 복제</b><small id="npCloneSub">지금 보고 있는 프로젝트의 단계·태스크·의존관계를 그대로 복사 (상태는 예정으로 초기화)</small></span></label>
-        <label><input type="radio" name="npseed" value="empty"><span><b>빈 프로젝트</b><small>단계·파트만 두고 태스크는 직접 추가</small></span></label>
+        <label><input type="radio" name="npseed" value="empty"><span><b>빈 프로젝트</b><small>단계·파트와 시작 태스크 1개만 두고, 나머지는 직접 추가</small></span></label>
       </div>
     </div>
   </div>
@@ -1352,7 +1355,14 @@ function renderProject(){
       '<td>'+statusBadge(t.status,t.id)+'</td>'+
       '<td class="gantt-cell">'+shades+grid+'<div class="'+bcls+'" style="left:'+left.toFixed(2)+'%;width:'+width.toFixed(2)+'%;background:'+col+'" title="'+t.id+' '+esc(t.name)+'"></div>'+lines+'</td></tr>';
   });
+  if(!rows){
+    rows=MODEL.tasks.length
+      ? '<tr><td colspan="6" class="emptyrow">선택한 담당의 태스크가 없습니다 — 상단 <b>전체 담당</b> 필터를 확인하세요</td><td class="gantt-cell">'+shades+grid+lines+'</td></tr>'
+      : '<tr><td colspan="6" class="emptyrow">아직 태스크가 없습니다 — <button class="btn small primary" type="button" data-emptyadd>첫 태스크 추가</button></td><td class="gantt-cell">'+shades+grid+lines+'</td></tr>';
+  }
   document.getElementById('gbody').innerHTML=rows;
+  const ea=document.querySelector('[data-emptyadd]');
+  if(ea)ea.onclick=()=>{if(!editMode)document.getElementById('editBtn').click();setTimeout(()=>openTask(null,(MODEL.phases[0]||{}).id),60);};
 
   let pht="",maxr=Math.max.apply(null,Object.values(roll.rl));
   MODEL.phases.forEach(p=>{const v=roll.ph[p.id]||0;
@@ -1470,7 +1480,7 @@ function renderList(sc,roll,PM){
       '<td style="min-width:110px"><div class="prwrap"><div class="progress"><div style="width:'+pr+'%"></div></div><span class="prtxt'+(pr===0?' zero':'')+'">'+pr+'%</span></div></td>'+
     '</tr>';
   }).join('');
-  document.getElementById('listbody').innerHTML=rows||'<tr><td colspan="8" style="padding:16px;color:#889">해당 담당의 태스크가 없습니다.</td></tr>';
+  document.getElementById('listbody').innerHTML=rows||('<tr><td colspan="8" class="emptyrow">'+(MODEL.tasks.length?'선택한 담당의 태스크가 없습니다 — 상단 <b>전체 담당</b> 필터를 확인하세요':'아직 태스크가 없습니다 — <b>WBS · 간트</b> 탭에서 첫 태스크를 추가해 보세요')+'</td></tr>');
 }
 // ---------- kanban view ----------
 function renderKanban(sc,PM){
@@ -1485,7 +1495,7 @@ function renderKanban(sc,PM){
         '<div class="kc-foot">'+roleCell(t.role)+'<span class="kc-md">'+t.md+' MD</span></div>'+(( t.assignees||[]).length?'<div class="kc-asg">'+esc((t.assignees||[]).join(', '))+'</div>':'')+
       '</div>';}).join('');
     const slim=!items.length&&(st==='보류'||st==='취소');
-    return '<div class="kcol'+(slim?' slim':'')+'"><div class="kcol-hd"><span class="badge" style="background:'+sb[0]+';color:'+sb[1]+'">'+st+'</span><span class="kcol-n">'+items.length+'</span></div><div class="kcol-body" data-drop="'+esc(st)+'">'+(cards||'<div class="kempty">비어 있음</div>')+'</div></div>';
+    return '<div class="kcol'+(slim?' slim':'')+'"><div class="kcol-hd"><span class="badge" style="background:'+sb[0]+';color:'+sb[1]+'">'+st+'</span><span class="kcol-n">'+items.length+'</span></div><div class="kcol-body" data-drop="'+esc(st)+'">'+(cards||'<div class="kempty">'+((!MODEL.tasks.length&&st===MODEL.statuses[0])?'아직 태스크가 없습니다':'비어 있음')+'</div>')+'</div></div>';
   }).join('');
   document.getElementById('kanban').innerHTML=cols;
 }
@@ -1794,6 +1804,13 @@ document.getElementById('meInp').onchange=function(){WS.me=this.value.trim();per
 document.getElementById('newProjBtn').onclick=()=>openNewProj();
 
 // ---- 새 프로젝트 ----
+// 빈 프로젝트가 완전 백지가 되지 않도록 첫 태스크 한 줄을 심어 둔다
+function starterTasks(){
+  const ph=(MODEL.phases&&MODEL.phases[0])?MODEL.phases[0].id:'1';
+  const rs=MODEL.roles||[];
+  const rl=rs.indexOf('기획/PM')>=0?'기획/PM':(rs[0]||'전체');
+  return [{id:ph+'.1',name:'킥오프 & 요구사항 정의',phase:ph,role:rl,md:3,dur:2,deps:[],status:'예정'}];
+}
 function openNewProj(){
   const npr=document.getElementById('npRole');
   npr.innerHTML=MY_ROLES.map(r=>'<option'+(r==='PM'?' selected':'')+'>'+r+'</option>').join('');
@@ -1813,7 +1830,7 @@ document.getElementById('npCreate').onclick=()=>{
   if(!name){document.getElementById('errNpName').textContent='프로젝트명을 입력하세요';return;}
   const seedMode=(document.querySelector('input[name="npseed"]:checked')||{}).value||'tpl';
   const src=seedMode==='clone'?MODEL:SEED;
-  const np=normProj(clone(seedMode==='empty'?{phases:clone(MODEL.phases),roles:clone(MODEL.roles),statuses:clone(MODEL.statuses),tasks:[]}:src),WS.projects.length);
+  const np=normProj(clone(seedMode==='empty'?{phases:clone(MODEL.phases),roles:clone(MODEL.roles),statuses:clone(MODEL.statuses),tasks:starterTasks()}:src),WS.projects.length);
   np.id='p'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
   np.settings.project=name;
   np.settings.today=document.getElementById('npToday').value||MODEL.settings.today;
