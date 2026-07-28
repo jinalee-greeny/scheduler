@@ -251,7 +251,8 @@ table{width:100%;border-collapse:collapse}
 .chiprow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .hchip{background:var(--holi);border:1px solid #f3c9c9;border-radius:6px;padding:3px 8px;font-size:13px;display:inline-flex;gap:6px;align-items:center}
 .hchip b{font-weight:600}.hchip .del{cursor:pointer;color:#c0392b}
-.sect{font-size:13px;font-weight:700;margin:16px 0 8px;color:#334;border-top:1px solid #eef0f2;padding-top:12px}
+.sect{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin:16px 0 10px;color:#8a919b;border-top:1px solid #eef0f2;padding-top:14px;display:flex;align-items:center;gap:7px}
+.sect::before{content:"";width:5px;height:5px;border-radius:2px;background:var(--acc)}
 .sect:first-child{border-top:0;margin-top:0;padding-top:0}
 .phrow{display:flex;gap:8px;align-items:center;margin-bottom:6px}
 .phrow input[type=text]{flex:1}
@@ -1145,7 +1146,7 @@ function renderPchips(){
 }
 document.getElementById('pAdd').onclick=()=>{const n=document.getElementById('pName').value.trim();if(!n)return;if(MODEL.people.indexOf(n)>=0){toast('이미 있는 인력입니다');return;}MODEL.people.push(n);document.getElementById('pName').value='';renderPchips();};
 function renderRchips(){
-  document.getElementById('rChips').innerHTML=MODEL.roles.map(r=>'<span class="hchip"><b>'+esc(r)+'</b> <span class="del" data-rdel="'+esc(r)+'">×</span></span>').join('');
+  document.getElementById('rChips').innerHTML=MODEL.roles.map(r=>'<span class="hchip rtip" data-rtip="'+esc(roleTip(r))+'"><b>'+esc(r)+'</b> <span class="del" data-rdel="'+esc(r)+'">×</span></span>').join('');
   document.querySelectorAll('[data-rdel]').forEach(el=>el.onclick=()=>{
     const r=el.getAttribute('data-rdel'), used=MODEL.tasks.filter(t=>t.role===r).length;
     if(used){toast('"'+r+'" 은(는) 태스크 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}
