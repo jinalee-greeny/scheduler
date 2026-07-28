@@ -703,6 +703,65 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
 .foldtog .icn{width:13px;height:13px;stroke-width:2.4;vertical-align:0}
 .simverdict .ic .icn{width:15px;height:15px;stroke-width:2.6;vertical-align:0}
 .btn .icn,.ubtn .icn{margin-right:0}
+
+/* ===== 일정 자동 생성 ===== */
+.gsteps{display:flex;gap:6px;padding:6px 24px 6px}
+#genOverlay .mfoot{gap:12px}
+#genOverlay .mfoot .btn{white-space:nowrap;flex:none}
+#gHint{flex:1;min-width:0;line-height:1.5}
+.gsteps i{flex:1;height:3px;border-radius:2px;background:#e6e8ec;transition:.15s}
+.gsteps i.on{background:var(--acc)}
+.gpane{display:none}
+.gpane.on{display:block}
+.gcards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gcards label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;cursor:pointer;transition:.12s;background:#fff}
+.gcards label:hover{border-color:#c8cdd4}
+.gcards label:has(input:checked){border-color:var(--acc);background:rgba(78,203,106,.07)}
+.gcards input{width:16px;height:16px;flex:none;margin:2px 0 0;padding:0;accent-color:var(--acc);border-radius:50%}
+.gcards>label>span{flex:1;min-width:0}
+.gcards b{display:block;font-size:13.5px;font-weight:650;line-height:1.45}
+.gcards small{display:block;color:#8a919b;font-size:11.5px;line-height:1.6;margin-top:3px}
+.gseg{display:flex;gap:6px}
+.gseg button{flex:1;font-family:inherit;font-size:12.5px;padding:9px 8px;border:1px solid var(--line);
+  background:#fff;border-radius:9px;cursor:pointer;color:#8a919b;line-height:1.45;transition:.12s}
+.gseg button b{font-weight:700}
+.gseg button:hover{border-color:#c8cdd4}
+.gseg button.on{border-color:var(--acc);background:rgba(78,203,106,.09);color:#2f8f4a}
+.gchk{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:4px}
+.gchk label{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;font-size:13.5px;cursor:pointer}
+.gchk label:hover{background:rgba(120,128,140,.07)}
+.gchk input{width:16px;height:16px;accent-color:var(--acc);flex:none;cursor:pointer}
+.gnote{font-size:11.5px;color:#8a919b;line-height:1.6}
+#gReq{min-height:92px;resize:vertical;font-size:13px;line-height:1.7}
+.gkey{border:1px solid var(--line);border-radius:10px;padding:9px 12px 11px;margin-top:10px}
+.gkey .hd{font-size:11.5px;color:var(--sub);font-weight:650;margin-bottom:4px}
+.gkey label{display:flex;align-items:center;gap:9px;padding:5px 3px;font-size:13px;cursor:pointer}
+.gkey input{width:15px;height:15px;accent-color:var(--acc);flex:none;cursor:pointer}
+.gkey .tg{margin-left:auto;font-size:11px;color:#9aa2ab;font-family:var(--mono);white-space:nowrap}
+.gsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.gsum>div{border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.gsum span{display:block;font-size:11px;color:var(--sub);font-weight:650}
+.gsum b{display:block;font-size:16.5px;font-weight:700;margin-top:2px;font-family:var(--mono);line-height:1.4}
+.gsum b em{font-style:normal;font-size:11px;color:#9aa2ab;font-weight:600}
+.gvd{border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.6;margin-bottom:12px;font-weight:600}
+.gvd.ok{background:rgba(78,203,106,.13);color:#1f7a3a}
+.gvd.warn{background:rgba(217,119,6,.13);color:#96590a}
+.gvd.bad{background:rgba(192,57,43,.11);color:#b23125}
+.gfix{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.gfix .r{display:flex;gap:10px;padding:9px 12px;border-bottom:1px solid #f0f1f3;font-size:12.5px;line-height:1.65}
+.gfix .r:last-child{border-bottom:0}
+.gfix .r b{flex:none;width:76px;font-weight:650}
+.gfix .r span{color:#6b7280}
+.gprev{max-height:270px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.gprev table{width:100%;border-collapse:collapse;font-size:12.5px}
+.gprev th{position:sticky;top:0;background:#fafbfc;text-align:left;padding:8px 10px;
+  border-bottom:1px solid var(--line);font-size:11px;color:var(--sub);font-weight:650}
+.gprev td{padding:6px 10px;border-bottom:1px solid #f0f1f3;white-space:nowrap}
+.gprev td.nm{white-space:normal;min-width:170px}
+.gprev tr:last-child td{border-bottom:0}
+.gprev tr.phr td{background:#f6f7f9;font-weight:700;font-size:11.5px;color:var(--sub)}
+@media(max-width:720px){.gcards,.gchk{grid-template-columns:1fr}.gseg{flex-direction:column}.gsum{grid-template-columns:1fr 1fr}}
 </style></head>
 <body><div class="wrap">
 <!-- 시스템 아이콘 세트: Lucide (ISC License, (c) Lucide Contributors) — 외부 의존 없이 인라인 -->
@@ -716,6 +775,7 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 <symbol id="i-bang" viewBox="0 0 24 24"><path d="M12 5v9"/><path d="M12 18.5h.01"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M3 5h4"/><path d="M19 17v4"/><path d="M17 19h4"/></symbol>
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
 <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
@@ -749,7 +809,10 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
       <div class="home-sub">담당자 <input class="meinp" id="meInp" list="peopleAll" placeholder="내 이름"><datalist id="peopleAll"></datalist>
         <span>이름과 프로젝트별 역할 기준으로 <b>내 작업</b>을 모아 봅니다</span></div>
     </div>
-    <button class="btn primary" id="newProjBtn"><svg class="icn s14"><use href="#i-plus"></use></svg> 새 프로젝트</button>
+    <div style="display:flex;gap:8px;flex:none">
+      <button class="btn" id="genBtn"><svg class="icn s14"><use href="#i-sparkles"></use></svg> 일정 자동 생성</button>
+      <button class="btn primary" id="newProjBtn"><svg class="icn s14"><use href="#i-plus"></use></svg> 새 프로젝트</button>
+    </div>
   </div>
   <div class="hsum" id="hsum"></div>
   <div class="sec-hd"><h2>프로젝트</h2><em>클릭하면 해당 프로젝트로 이동</em></div>
@@ -989,6 +1052,67 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
   </div>
   <div class="mfoot"><span id="impSum" style="font-size:12px;color:#9aa2ab">붙여넣거나 파일을 선택하면 미리보기가 표시됩니다</span>
     <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="impApply">가져오기</button></div>
+  </div>
+</div></div>
+
+<!-- ===== 일정 자동 생성 ===== -->
+<div class="overlay" id="genOverlay"><div class="modal wide">
+  <h2><span id="gTitle">일정 자동 생성 · 1/3 유형과 기준</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
+  <div class="gsteps"><i class="on"></i><i></i><i></i></div>
+  <div class="mbody">
+
+    <div class="gpane on" id="gPane1">
+      <div class="field"><label>프로젝트 유형</label><div class="gcards" id="gTplBox"></div></div>
+      <div class="field"><label>산출 기준 — 아는 값 두 개를 넣으면 나머지 하나를 계산합니다</label>
+        <div class="gseg" id="gModeSeg">
+          <button type="button" data-gm="A" class="on">기간 + 공수 → <b>필요 인원</b></button>
+          <button type="button" data-gm="B">기간 + 인원 → <b>소화 공수</b></button>
+          <button type="button" data-gm="C">공수 + 인원 → <b>필요 기간</b></button>
+        </div></div>
+      <div class="row3">
+        <div class="field"><label>착수일</label><input id="gStart" type="date"></div>
+        <div class="field" id="gfOpen"><label>목표 오픈일</label><input id="gOpen" type="date"></div>
+        <div class="field"><label>버퍼 (근무일)</label><input id="gBuf" type="number" min="0" step="1" value="5"></div>
+      </div>
+      <div class="row2">
+        <div class="field" id="gfMM"><label>총 공수 (M/M)</label><input id="gMM" type="number" min="0.5" step="0.5" value="6"></div>
+        <div class="field" id="gfPeople"><label>투입 인원 (명)</label><input id="gPeople" type="number" min="1" step="1" value="6"></div>
+      </div>
+      <div class="err" id="gErr1"></div>
+    </div>
+
+    <div class="gpane" id="gPane2">
+      <div class="row3">
+        <div class="field"><label>화면 수 (개)</label><input id="gScreens" type="number" min="1" step="1" value="20"></div>
+        <div class="field"><label>QA 강도</label><select id="gQa"><option>간이</option><option selected>표준</option><option>강화</option></select></div>
+        <div class="field"><label>공수 배분 기준</label><div class="gnote">화면 수가 20개에서 멀어질수록 설계·디자인·개발 태스크의 공수 비중이 함께 커지거나 줄어듭니다</div></div>
+      </div>
+      <div class="field"><label>포함 범위</label>
+        <div class="gchk">
+          <label><input type="checkbox" id="gcResearch" checked><span>리서치 · 사용성 검증</span></label>
+          <label><input type="checkbox" id="gcGui" checked><span>GUI 디자인</span></label>
+          <label><input type="checkbox" id="gcPub" checked><span>퍼블리싱</span></label>
+          <label><input type="checkbox" id="gcDev" checked><span>개발 (프론트 · 백엔드)</span></label>
+          <label><input type="checkbox" id="gcStab" checked><span>오픈 후 안정화</span></label>
+        </div>
+      </div>
+      <div class="field"><label>요구사항 (선택) — 붙여넣고 추천을 받으면 관련 태스크가 추가됩니다</label>
+        <textarea id="gReq" placeholder="예) 회원 로그인은 그룹사 SSO 연동, 결제는 PG사 연동이 필요하고 관리자 백오피스도 새로 만들어야 합니다. 웹접근성 인증도 받아야 함."></textarea>
+        <div style="margin-top:8px"><button class="btn small" type="button" id="gExtractBtn"><svg class="icn s14"><use href="#i-sparkles"></use></svg> 요구사항에서 태스크 추천</button></div>
+      </div>
+      <div id="gKeyOut"></div>
+    </div>
+
+    <div class="gpane" id="gPane3"><div id="gPreview"></div></div>
+
+  </div>
+  <div class="mfoot"><span id="gHint" style="font-size:12px;color:#9aa2ab">규칙 기반 추정치입니다 — 생성 후 자유롭게 편집할 수 있습니다</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="gPrev" style="display:none">이전</button>
+      <button class="btn" data-close>취소</button>
+      <button class="btn primary" id="gNext">다음</button>
+      <button class="btn primary" id="gApply" style="display:none">일정 생성</button>
+    </div>
   </div>
 </div></div>
 
@@ -1563,6 +1687,7 @@ function openUtilMenu(anchor){
   closeProjMenu();
   const m=document.createElement('div');m.className='projmenu utilmenu';
   m.innerHTML='<div class="pm-hd">현재 프로젝트</div>'+
+    '<div class="pm-i" data-u="gen">'+icn('sparkles','s14 mi')+'<span>일정 자동 생성</span></div>'+
     '<div class="pm-i" data-u="set">'+icn('settings','s14 mi')+'<span>프로젝트 설정</span></div>'+
     '<div class="pm-i" data-u="pool">'+icn('users','s14 mi')+'<span>인력풀 관리</span></div>'+
     '<div class="pm-d"></div><div class="pm-hd">데이터</div>'+
@@ -1578,6 +1703,7 @@ function openUtilMenu(anchor){
   m.querySelectorAll('[data-u]').forEach(el=>el.onclick=()=>{
     const k=el.getAttribute('data-u'); closeUtilMenu();
     if(k==='pool'){goPool();return;}
+    if(k==='gen'){openGen();return;}
     if(k==='set'&&VIEW!=='project'){VIEW='project';render();}
     document.getElementById(act[k]).click();
   });
@@ -2339,6 +2465,475 @@ document.addEventListener('pointerup',e=>{
       if(t && t.status!==st){ snapshot(); t.status=st; stampEdit(); render(); toast(d.id+' → '+st); } }
   }
 });
+
+
+/* ================= 일정 자동 생성 (Auto Scheduler) =================
+   PM이 유형·기간·공수·인원·범위를 넣으면 규칙 기반으로 WBS 한 벌을 만들어 낸다.
+   설계 전제 — compute()는 오픈일을 '입력'이 아니라 ASAP + 버퍼로 '도출'한다.
+   따라서 생성기는 오픈일을 직접 쓰지 않고, 태스크의 md·dur·deps를 빚어
+   임계경로 근무일수(cpWd)가 가용 근무일 안에 들어오도록 맞춘다.               */
+
+const gt=(n,p,r,w,need,sc)=>({n:n,p:p,r:r,w:w,need:need||'',sc:!!sc});
+
+// ---- 유형 템플릿 ----
+// w = 상대 공수 가중치, need = 범위 체크박스 게이트, sc = 화면 수에 비례
+const GTPL={
+web:{label:'웹 · 포털 구축/리뉴얼',desc:'준비·기획 → UX → UI → 퍼블·프론트 → 백엔드 → 통합·QA → 오픈',
+  phases:[{id:'1',name:'준비·기획',color:'#6b7280'},{id:'2',name:'UX 설계',color:'#0ea5e9'},{id:'3',name:'UI 디자인',color:'#8b5cf6'},
+          {id:'4',name:'퍼블·프론트',color:'#2563eb'},{id:'5',name:'백엔드·데이터',color:'#0d9488'},{id:'6',name:'통합·QA',color:'#d97706'},
+          {id:'7',name:'오픈·안정화',color:'#16a34a'}],
+  roles:['기획/PM','UX','UI','퍼블','FE','BE','FE/BE','QA','기획/QA','전체'],
+  slot:{plan:'1',ux:'2',ui:'3',pub:'4',fe:'4',be:'5',qa:'6',stab:'7'},
+  rmap:{plan:'기획/PM',ux:'UX',ui:'UI',pub:'퍼블',fe:'FE',be:'BE',qa:'QA'},
+  tasks:[gt('킥오프 & 요구사항 정의','1','기획/PM',3),gt('현황 분석·데스크리서치','1','UX',4,'research'),
+    gt('사용자 인터뷰·설문','1','UX',5,'research'),gt('요구사항 정의서·범위 확정','1','기획/PM',4),
+    gt('IA & 유저플로우','2','UX',5,'',1),gt('화면설계(와이어프레임)','2','UX',10,'',1),
+    gt('프로토타입·사용성 점검','2','UX',5,'research'),
+    gt('디자인 컨셉·무드','3','UI',3,'gui'),gt('디자인 시스템(컴포넌트·토큰)','3','UI',6,'gui'),
+    gt('본 화면 UI 디자인','3','UI',12,'gui',1),gt('디자인 QA·핸드오프','3','UI',3,'gui'),
+    gt('마크업·스타일 퍼블리싱','4','퍼블',10,'pub',1),
+    gt('프론트 기능개발','4','FE',14,'dev',1),gt('상태관리·유효성','4','FE',5,'dev'),
+    gt('데이터 모델·DB 설계','5','BE',5,'dev'),gt('API 개발(CRUD)','5','BE',12,'dev',1),gt('인증·권한','5','BE',5,'dev'),
+    gt('FE/BE 통합','6','FE/BE',5),gt('통합 QA·버그픽스','6','QA',8,'',1),gt('UAT(사용자 검수)','6','기획/QA',4),
+    gt('배포 준비·릴리즈','7','BE',3),gt('오픈 & 안정화 모니터링','7','전체',4,'stab')]},
+
+app:{label:'모바일 앱 (iOS · AOS)',desc:'기획 → UX → UI → 앱 개발(iOS/AOS 병렬) → 서버·API → 통합·QA → 스토어 배포',
+  phases:[{id:'1',name:'준비·기획',color:'#6b7280'},{id:'2',name:'UX 설계',color:'#0ea5e9'},{id:'3',name:'UI 디자인',color:'#8b5cf6'},
+          {id:'4',name:'앱 개발',color:'#2563eb'},{id:'5',name:'서버·API',color:'#0d9488'},{id:'6',name:'통합·QA',color:'#d97706'},
+          {id:'7',name:'스토어 배포',color:'#16a34a'}],
+  roles:['기획/PM','UX','UI','iOS','AOS','BE','FE/BE','QA','기획/QA','전체'],
+  slot:{plan:'1',ux:'2',ui:'3',pub:'4',fe:'4',be:'5',qa:'6',stab:'7'},
+  rmap:{plan:'기획/PM',ux:'UX',ui:'UI',pub:'iOS',fe:'iOS',be:'BE',qa:'QA'},
+  tasks:[gt('킥오프 & 요구사항 정의','1','기획/PM',3),gt('경쟁 앱 분석·스토어 리서치','1','UX',4,'research'),
+    gt('사용자 인터뷰','1','UX',4,'research'),gt('기능 정의·서비스 정책서','1','기획/PM',4),
+    gt('IA & 유저플로우','2','UX',5,'',1),gt('화면설계(와이어프레임)','2','UX',10,'',1),
+    gt('프로토타입·사용성 점검','2','UX',5,'research'),
+    gt('디자인 컨셉·무드','3','UI',3,'gui'),gt('디자인 시스템·아이콘','3','UI',6,'gui'),
+    gt('본 화면 UI 디자인 (iOS·AOS)','3','UI',12,'gui',1),gt('디자인 QA·리소스 전달','3','UI',3,'gui'),
+    gt('iOS 화면 개발','4','iOS',12,'dev',1),gt('AOS 화면 개발','4','AOS',12,'dev',1),
+    gt('네이티브 기능(푸시·권한·딥링크)','4','iOS',5,'dev'),
+    gt('데이터 모델·DB 설계','5','BE',5,'dev'),gt('API 개발','5','BE',12,'dev',1),gt('인증·소셜 로그인','5','BE',5,'dev'),
+    gt('앱/서버 통합','6','FE/BE',5),gt('통합 QA·디바이스 테스트','6','QA',9,'',1),gt('UAT(사용자 검수)','6','기획/QA',4),
+    gt('스토어 등록·심사 제출','7','기획/PM',3),gt('오픈 & 안정화 모니터링','7','전체',4,'stab')]},
+
+research:{label:'UX 리서치 · 컨설팅',desc:'착수·설계 → 조사 실행 → 분석·인사이트 → 전략·제언 → 산출물·보고',
+  phases:[{id:'1',name:'착수·설계',color:'#6b7280'},{id:'2',name:'조사 실행',color:'#0ea5e9'},{id:'3',name:'분석·인사이트',color:'#8b5cf6'},
+          {id:'4',name:'전략·제언',color:'#d97706'},{id:'5',name:'산출물·보고',color:'#16a34a'}],
+  roles:['기획/PM','UX','UI','전체'],
+  slot:{plan:'1',ux:'4',ui:'4',pub:'4',fe:'4',be:'4',qa:'5',stab:'5'},
+  rmap:{plan:'기획/PM',ux:'UX',ui:'UI',pub:'UX',fe:'UX',be:'기획/PM',qa:'기획/PM'},
+  tasks:[gt('킥오프 & 과제 정의','1','기획/PM',3),gt('리서치 설계·가이드 작성','1','UX',5),
+    gt('데스크리서치·벤치마킹','1','UX',5,'research'),
+    gt('참여자 리크루팅','2','기획/PM',4,'research'),gt('심층 인터뷰·관찰조사','2','UX',10,'research'),
+    gt('설문조사 설계·집행','2','UX',6,'research'),gt('사용성 평가(UT)','2','UX',8,'research'),
+    gt('데이터 정리·코딩','3','UX',6),gt('퍼소나·저니맵','3','UX',7,'',1),gt('인사이트 도출·기회영역','3','UX',6),
+    gt('개선 전략·과제 정의','4','기획/PM',6),gt('컨셉 스케치·프로토타입','4','UX',6,'',1),
+    gt('컨셉 비주얼·제안 시안','4','UI',6,'gui',1),
+    gt('최종 보고서 작성','5','기획/PM',8),gt('결과 공유 워크숍','5','전체',3),
+    gt('이행 로드맵·핸드오프','5','기획/PM',4,'stab')]},
+
+ops:{label:'운영 · 개선 (스프린트 반복)',desc:'온보딩·진단 → 스프린트 1·2·3 반복 → 안정화·회고',
+  phases:[{id:'1',name:'온보딩·진단',color:'#6b7280'},{id:'2',name:'스프린트 1',color:'#0ea5e9'},{id:'3',name:'스프린트 2',color:'#8b5cf6'},
+          {id:'4',name:'스프린트 3',color:'#2563eb'},{id:'5',name:'안정화·회고',color:'#16a34a'}],
+  roles:['기획/PM','UX','UI','퍼블','FE','BE','QA','전체'],
+  slot:{plan:'1',ux:'2',ui:'2',pub:'2',fe:'3',be:'3',qa:'4',stab:'5'},
+  rmap:{plan:'기획/PM',ux:'UX',ui:'UI',pub:'퍼블',fe:'FE',be:'BE',qa:'QA'},
+  tasks:[gt('현황 진단·백로그 정리','1','기획/PM',4),gt('운영 프로세스·릴리즈 기준 정의','1','기획/PM',3),
+    gt('UX 점검·개선과제 도출','1','UX',5,'research'),
+    gt('스프린트 1 계획·요건 정리','2','기획/PM',3),gt('스프린트 1 화면·플로우 개선','2','UX',5,'',1),
+    gt('스프린트 1 UI 디자인','2','UI',5,'gui',1),gt('스프린트 1 퍼블리싱','2','퍼블',5,'pub',1),
+    gt('스프린트 1 기능 개발','2','FE',8,'dev',1),gt('스프린트 1 서버·API','2','BE',6,'dev',1),
+    gt('스프린트 1 QA·릴리즈','2','QA',5),
+    gt('스프린트 2 계획·요건 정리','3','기획/PM',3),gt('스프린트 2 화면·플로우 개선','3','UX',5,'',1),
+    gt('스프린트 2 UI 디자인','3','UI',5,'gui',1),gt('스프린트 2 퍼블리싱','3','퍼블',5,'pub',1),
+    gt('스프린트 2 기능 개발','3','FE',8,'dev',1),gt('스프린트 2 서버·API','3','BE',6,'dev',1),
+    gt('스프린트 2 QA·릴리즈','3','QA',5),
+    gt('스프린트 3 계획·요건 정리','4','기획/PM',3),gt('스프린트 3 화면·플로우 개선','4','UX',5,'',1),
+    gt('스프린트 3 UI 디자인','4','UI',5,'gui',1),gt('스프린트 3 퍼블리싱','4','퍼블',5,'pub',1),
+    gt('스프린트 3 기능 개발','4','FE',8,'dev',1),gt('스프린트 3 서버·API','4','BE',6,'dev',1),
+    gt('스프린트 3 QA·릴리즈','4','QA',5),
+    gt('안정화·모니터링','5','전체',4,'stab'),gt('회고 & 다음 분기 로드맵','5','기획/PM',3)]}
+};
+
+// ---- 요구사항 텍스트 → 추천 태스크 (키워드 규칙) ----
+const GKEY=[
+ {l:'결제·PG',kw:['결제','페이먼트','payment','pg사','정산','구독료','청구'],
+  add:[{n:'결제(PG) 연동 설계·개발',s:'be',r:'be',w:8},{n:'결제·주문 플로우 화면설계',s:'ux',r:'ux',w:4}]},
+ {l:'로그인·인증',kw:['로그인','인증','sso','oauth','회원가입','본인확인','간편가입'],
+  add:[{n:'인증·SSO 연동 개발',s:'be',r:'be',w:6}]},
+ {l:'검색',kw:['검색','search','색인','자동완성'],
+  add:[{n:'검색·필터 기능 개발',s:'be',r:'be',w:6},{n:'검색 결과 화면설계',s:'ux',r:'ux',w:3}]},
+ {l:'관리자·백오피스',kw:['관리자','백오피스','admin','cms','운영도구'],
+  add:[{n:'관리자(백오피스) 화면설계',s:'ux',r:'ux',w:6},{n:'관리자 기능 개발',s:'fe',r:'fe',w:8}]},
+ {l:'웹접근성',kw:['접근성','wcag','a11y','스크린리더','장애인'],
+  add:[{n:'접근성 지침 정의·검수',s:'qa',r:'qa',w:5},{n:'접근성 대응 마크업',s:'pub',r:'pub',w:5}]},
+ {l:'다국어',kw:['다국어','글로벌','영문','i18n','번역','현지화'],
+  add:[{n:'다국어(i18n) 구조 설계·적용',s:'fe',r:'fe',w:6}]},
+ {l:'데이터 마이그레이션',kw:['마이그레이션','이관','migration','데이터 이전','레거시'],
+  add:[{n:'데이터 마이그레이션 설계·검증',s:'be',r:'be',w:8}]},
+ {l:'반응형',kw:['반응형','모바일웹','모바일 웹','responsive','태블릿'],
+  add:[{n:'반응형 대응 퍼블리싱',s:'pub',r:'pub',w:6}]},
+ {l:'디자인 시스템',kw:['디자인시스템','디자인 시스템','design system','컴포넌트 라이브러리','디자인 토큰'],
+  add:[{n:'디자인 시스템 구축·문서화',s:'ui',r:'ui',w:8}]},
+ {l:'알림·푸시',kw:['알림','푸시','push','notification','문자발송','sms','메일발송'],
+  add:[{n:'알림·푸시 발송 로직 개발',s:'be',r:'be',w:6}]},
+ {l:'통계·대시보드',kw:['통계','대시보드','리포트','dashboard','지표','집계'],
+  add:[{n:'통계·대시보드 화면설계',s:'ux',r:'ux',w:5},{n:'집계·리포트 API 개발',s:'be',r:'be',w:6}]},
+ {l:'외부 연동',kw:['연동','인터페이스','외부 시스템','erp','crm','open api'],
+  add:[{n:'외부 시스템 연동 개발',s:'be',r:'be',w:7}]},
+ {l:'보안·개인정보',kw:['보안','개인정보','취약점','암호화','isms','모의해킹'],
+  add:[{n:'보안 점검·취약점 대응',s:'qa',r:'be',w:6}]},
+ {l:'성능 최적화',kw:['성능','속도 개선','최적화','performance','부하','트래픽'],
+  add:[{n:'성능 최적화·부하 테스트',s:'qa',r:'be',w:6}]},
+ {l:'AI·추천',kw:['ai','인공지능','추천','개인화','챗봇','llm','머신러닝'],
+  add:[{n:'AI·추천 기능 설계·개발',s:'be',r:'be',w:9},{n:'AI 기능 UX 설계',s:'ux',r:'ux',w:4}]}
+];
+function gExtract(txt){
+  const t=String(txt||'').toLowerCase(); if(!t.trim())return [];
+  const out=[];
+  GKEY.forEach((g,i)=>{ if(g.kw.some(k=>t.indexOf(k)>=0)) g.add.forEach((a,j)=>out.push({k:i+'_'+j,l:g.l,n:a.n,s:a.s,r:a.r,w:a.w})); });
+  return out;
+}
+
+// ---- 근무일 계산 (현재 주말 토글·공휴일 기준) ----
+function gHolSet(){return new Set((MODEL.holidays||[]).map(h=>h.date));}
+function gIsWork(dt,hol){ if(hol.has(iso(dt)))return false;
+  if(mode==='off'&&(dt.getDay()===0||dt.getDay()===6))return false; return true; }
+function gAddWd(dt,k){const hol=gHolSet();let x=new Date(dt),c=0,s=k>=0?1:-1;
+  while(c<Math.abs(k)){x=addDays(x,s);if(gIsWork(x,hol))c++;}return x;}
+function gNormF(dt){const hol=gHolSet();let x=new Date(dt),g=0;
+  while(!gIsWork(x,hol)&&g<400){x=addDays(x,1);g++;}return x;}
+function gWdCount(a,b){const hol=gHolSet();let x=D(a),e=D(b),c=0,g=0;
+  while(x<=e&&g<4000){if(gIsWork(x,hol))c++;x=addDays(x,1);g++;}return c;}
+
+// ---- 코어: 공수 배분 → 기간 → 의존관계 ----
+function gLayout(tpl,scope,totalMD,par,extras){
+  const sf=Math.max(.4,Math.min(3,(scope.screens||20)/20));
+  const qaMul=scope.qa==='간이'?.6:(scope.qa==='강화'?1.6:1);
+  const base=tpl.tasks.filter(t=>!t.need||scope[t.need]);
+  const ex=(extras||[]).map(e=>({n:e.n,p:tpl.slot[e.s]||tpl.slot.plan,r:tpl.rmap[e.r]||tpl.roles[0],w:e.w,need:'',sc:false}));
+  const list=base.concat(ex);
+  if(!list.length||totalMD<1)return null;
+  const wt=list.map(t=>t.w*(t.sc?sf:1)*((t.r==='QA'||t.r==='기획/QA')?qaMul:1));
+  const sum=wt.reduce((a,b)=>a+b,0)||1;
+  const md=wt.map(w=>Math.max(1,Math.round(totalMD*w/sum)));
+  // 반올림 잔차는 공수가 큰 태스크부터 흡수시킨다
+  let diff=totalMD-md.reduce((a,b)=>a+b,0);
+  const ord=md.map((v,i)=>i).sort((a,b)=>md[b]-md[a]);
+  let gi=0;
+  while(diff!==0&&gi<md.length*60&&ord.length){
+    const i=ord[gi%ord.length];
+    if(diff>0){md[i]++;diff--;}
+    else if(md[i]>1){md[i]--;diff++;}
+    gi++;
+  }
+  // 단계별 → 역할별 체인. 체인 안은 순차, 단계 사이에는 배리어(선행 단계 전체 완료).
+  const byPh={},phOrder=[];
+  list.forEach((t,i)=>{ if(!byPh[t.p]){byPh[t.p]=[];phOrder.push(t.p);} byPh[t.p].push({t:t,md:md[i]}); });
+  const pIdx=id=>{const k=tpl.phases.findIndex(p=>p.id===id);return k<0?999:k;};
+  phOrder.sort((a,b)=>pIdx(a)-pIdx(b));
+  const out=[]; let prevLast=[],cpWd=0;
+  phOrder.forEach(pid=>{
+    const chains={},corder=[];
+    byPh[pid].forEach(x=>{ if(!chains[x.t.r]){chains[x.t.r]=[];corder.push(x.t.r);} chains[x.t.r].push(x); });
+    const lasts=[]; let phDur=0,seq=0;
+    corder.forEach(r=>{
+      let prevId=null,cd=0,np=Math.max(1,par[r]||1);
+      chains[r].forEach(x=>{
+        seq++; const id=pid+'.'+seq;
+        const dur=Math.max(1,Math.ceil(x.md/np));
+        out.push({id:id,name:x.t.n,phase:pid,role:r,md:x.md,dur:dur,
+          deps:prevId?[prevId]:prevLast.slice(),status:'예정',assignees:[]});
+        prevId=id; cd+=dur;
+      });
+      lasts.push(prevId); if(cd>phDur)phDur=cd;
+    });
+    cpWd+=phDur; prevLast=lasts.filter(Boolean);
+  });
+  const mdRole={}; out.forEach(t=>{mdRole[t.role]=(mdRole[t.role]||0)+t.md;});
+  return {tasks:out,cpWd:cpWd,totalMD:out.reduce((a,t)=>a+t.md,0),mdRole:mdRole};
+}
+
+// 임계경로를 가장 길게 만드는 역할(= 증원 1순위)
+function gBottleneck(r){
+  if(!r)return null;
+  const ch={},ph={};
+  r.tasks.forEach(t=>{const k=t.phase+'|'+t.role;ch[k]=(ch[k]||0)+t.dur;});
+  Object.keys(ch).forEach(k=>{const p=k.split('|')[0];
+    if(!ph[p]||ch[k]>ph[p].d)ph[p]={d:ch[k],r:k.split('|')[1]};});
+  let bp=null;Object.keys(ph).forEach(p=>{if(!bp||ph[p].d>ph[bp].d)bp=p;});
+  return bp?ph[bp].r:null;
+}
+// 총 인원 N을 역할별 공수 비중에 따라 나눈다
+function gPar(tpl,scope,totalMD,N,extras){
+  const one={}; tpl.roles.forEach(r=>one[r]=1);
+  const r0=gLayout(tpl,scope,totalMD,one,extras); if(!r0)return one;
+  const par={},tot=r0.totalMD||1;
+  tpl.roles.forEach(r=>par[r]=1);
+  Object.keys(r0.mdRole).forEach(r=>{par[r]=Math.max(1,Math.round(N*r0.mdRole[r]/tot));});
+  return par;
+}
+// 인력풀 역할명(자유 입력)을 템플릿 역할에 느슨하게 매칭
+function gRoleMatch(pr,keys){
+  pr=String(pr||'').trim(); if(!pr)return null;
+  if(keys.indexOf(pr)>=0)return pr;
+  const low=pr.toLowerCase();
+  for(let i=0;i<keys.length;i++){
+    const k=keys[i].toLowerCase();
+    if(k==='전체')continue;
+    if(low.indexOf(k)>=0||k.indexOf(low)>=0)return keys[i];
+  }
+  return null;
+}
+
+// ---- 3가지 역산 모드 ----
+function gSolve(cfg){
+  const tpl=GTPL[cfg.tpl]; if(!tpl)return null;
+  const ex=cfg.extras||[];
+  const startISO=iso(gNormF(D(cfg.start)));
+  let wdAvail=null;
+  if(cfg.mode!=='C'){ wdAvail=gWdCount(startISO,cfg.open)-cfg.buffer; if(wdAvail<1)wdAvail=1; }
+
+  if(cfg.mode==='A'){                    // 기간 + 공수 → 필요 인원
+    const par={}; tpl.roles.forEach(r=>par[r]=1);
+    let r=gLayout(tpl,cfg.scope,cfg.md,par,ex),it=0;
+    while(r&&r.cpWd>wdAvail&&it<200){
+      const b=gBottleneck(r); if(!b||(par[b]||1)>=10)break;
+      par[b]=(par[b]||1)+1; r=gLayout(tpl,cfg.scope,cfg.md,par,ex); it++;
+    }
+    return gPack(tpl,cfg,r,par,wdAvail,startISO);
+  }
+  if(cfg.mode==='B'){                    // 기간 + 인원 → 소화 가능 공수
+    let lo=Math.max(1,tpl.tasks.length),hi=Math.max(lo,cfg.people*wdAvail),best=null,bp=null;
+    for(let i=0;i<28&&lo<=hi;i++){
+      const mid=Math.floor((lo+hi)/2);
+      const p=gPar(tpl,cfg.scope,mid,cfg.people,ex);
+      const r=gLayout(tpl,cfg.scope,mid,p,ex);
+      if(r&&r.cpWd<=wdAvail){best=r;bp=p;lo=mid+1;} else hi=mid-1;
+    }
+    if(!best){ bp=gPar(tpl,cfg.scope,lo,cfg.people,ex); best=gLayout(tpl,cfg.scope,Math.max(1,lo),bp,ex); }
+    return gPack(tpl,cfg,best,bp,wdAvail,startISO);
+  }
+  // C: 공수 + 인원 → 필요 기간
+  const par=gPar(tpl,cfg.scope,cfg.md,cfg.people,ex);
+  const r=gLayout(tpl,cfg.scope,cfg.md,par,ex);
+  return gPack(tpl,cfg,r,par,r?r.cpWd:1,startISO);
+}
+
+// ---- 결과 + 타당성 진단 ----
+function gPack(tpl,cfg,r,par,wdAvail,startISO){
+  if(!r)return null;
+  const openISO = cfg.mode==='C'
+    ? iso(gAddWd(gAddWd(D(startISO),Math.max(0,r.cpWd-1)),cfg.buffer))
+    : cfg.open;
+  const need={},pool={};
+  Object.keys(r.mdRole).forEach(k=>{need[k]=Math.max(1,par[k]||1);});
+  const keys=Object.keys(need);
+  const cnt=keys.filter(k=>k!=='전체');
+  const phRole={};
+  r.tasks.forEach(t=>{if(t.role==='전체')return;(phRole[t.phase]=phRole[t.phase]||{})[t.role]=1;});
+  let head=0;
+  Object.keys(phRole).forEach(p=>{
+    const h=Object.keys(phRole[p]).reduce((a,k)=>a+(need[k]||1),0);
+    if(h>head)head=h;
+  });
+  if(!head)head=Math.max(1,cnt.length);
+  (WS.pool||[]).forEach(q=>{const k=gRoleMatch(q.role,cnt);if(k)pool[k]=(pool[k]||0)+(q.alloc==null?100:q.alloc)/100;});
+  const short=cnt.filter(k=>(pool[k]||0)+1e-9<need[k])
+                 .map(k=>({r:k,need:need[k],have:Math.round((pool[k]||0)*10)/10}));
+  const slack=wdAvail-r.cpWd;
+  let verdict='ok',msg='';
+  if(cfg.mode==='C'){
+    verdict=short.length?'warn':'ok';
+    msg='필요 기간은 '+r.cpWd+' 근무일이며, 버퍼 '+cfg.buffer+' 근무일을 더하면 오픈일은 '+openISO+' 입니다'
+      +(short.length?' — 다만 인력풀 인원이 부족합니다':'');
+  }
+  else if(slack<0){verdict='bad';msg='계획이 성립하지 않습니다 — 임계경로가 가용 기간보다 '+(-slack)+' 근무일 깁니다';}
+  else if(slack<=Math.max(2,Math.round(wdAvail*0.06))){verdict='warn';msg='빠듯합니다 — 가용 기간 대비 여유가 '+slack+' 근무일뿐입니다';}
+  else {verdict='ok';msg='성립합니다 — 가용 기간 안에 '+slack+' 근무일 여유가 있습니다';}
+  const fixes=[];
+  if(slack<0){
+    fixes.push({t:'기간 연장',d:'오픈일을 '+(-slack)+' 근무일 뒤('+iso(gAddWd(D(openISO),-slack))+')로 옮기면 성립합니다'});
+    const b=gBottleneck(r);
+    fixes.push({t:'인원 증원',d:'병목 역할은 '+(b||'-')+' 입니다 — 이 역할부터 늘리면 임계경로가 가장 빨리 줄어듭니다'});
+    const cut=Math.max(1,Math.min(80,Math.round((1-wdAvail/Math.max(1,r.cpWd))*100)));
+    fixes.push({t:'범위 축소',d:'공수를 약 '+cut+'%('+Math.round(r.totalMD*cut/100)+' MD) 덜어내면 현재 기간에 들어옵니다'});
+  }
+  if(short.length){
+    const tot=(WS.pool||[]).length;
+    const top=short.slice().sort((a,b)=>(b.need-b.have)-(a.need-a.have)).slice(0,3);
+    fixes.push({t:'인력 확보',d:(tot?'':'인력풀이 비어 있습니다 — ')+
+      top.map(x=>x.r+' '+x.need+'명 필요(보유 '+x.have+')').join(' · ')+
+      (short.length>3?' 외 '+(short.length-3)+'개 역할':'')});
+  }
+  if(!fixes.length)fixes.push({t:'참고',d:'생성 후 태스크별 공수·기간·의존관계를 편집 모드에서 조정할 수 있습니다'});
+  return {tpl:tpl,mode:cfg.mode,tasks:r.tasks,cpWd:r.cpWd,totalMD:r.totalMD,mdRole:r.mdRole,
+    par:need,head:head,pool:pool,short:short,wdAvail:wdAvail,slack:slack,
+    start:startISO,open:openISO,buffer:cfg.buffer,verdict:verdict,msg:msg,fixes:fixes};
+}
+
+/* ---------------- 생성 모달 ---------------- */
+let GSTEP=1,GRES=null,GEX=[],GTPLK='web',GMODE='A';
+const GTITLE=['','일정 자동 생성 · 1/3 유형과 기준','일정 자동 생성 · 2/3 범위와 요구사항','일정 자동 생성 · 3/3 미리보기와 진단'];
+
+function openGen(){
+  GSTEP=1;GRES=null;GEX=[];
+  document.getElementById('gTplBox').innerHTML=Object.keys(GTPL).map(k=>
+    '<label><input type="radio" name="gtpl" value="'+k+'"'+(k===GTPLK?' checked':'')+'>'+
+    '<span><b>'+esc(GTPL[k].label)+'</b><small>'+esc(GTPL[k].desc)+'</small></span></label>').join('');
+  document.querySelectorAll('input[name="gtpl"]').forEach(el=>el.onchange=function(){GTPLK=this.value;});
+  const t=MODEL.settings.today||iso(new Date());
+  document.getElementById('gStart').value=t;
+  document.getElementById('gOpen').value=iso(addDays(D(t),84));
+  document.getElementById('gBuf').value=MODEL.settings.buffer_wd;
+  document.getElementById('gErr1').textContent='';
+  document.getElementById('gKeyOut').innerHTML='';
+  document.getElementById('gReq').value='';
+  gModeUI();gStepUI();
+  document.getElementById('genOverlay').classList.add('on');
+}
+function gModeUI(){
+  document.querySelectorAll('#gModeSeg button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-gm')===GMODE));
+  document.getElementById('gfOpen').style.display=GMODE==='C'?'none':'';
+  document.getElementById('gfMM').style.display=GMODE==='B'?'none':'';
+  document.getElementById('gfPeople').style.display=GMODE==='A'?'none':'';
+}
+function gStepUI(){
+  for(let i=1;i<=3;i++)document.getElementById('gPane'+i).classList.toggle('on',i===GSTEP);
+  document.querySelectorAll('.gsteps i').forEach((el,i)=>el.classList.toggle('on',i<GSTEP));
+  document.getElementById('gTitle').textContent=GTITLE[GSTEP];
+  document.getElementById('gPrev').style.display=GSTEP>1?'':'none';
+  document.getElementById('gNext').style.display=GSTEP<3?'':'none';
+  document.getElementById('gApply').style.display=GSTEP===3?'':'none';
+  document.getElementById('gHint').textContent = GSTEP===3
+    ? '규칙 기반 추정치입니다 — 생성 후 편집할 수 있습니다'
+    : (GSTEP===2?'체크한 범위만 태스크로 만들어집니다':'아는 값 두 개만 넣으면 나머지 하나를 계산합니다');
+}
+function gv(id){return document.getElementById(id).value;}
+function gCfg(){
+  const scope={screens:Math.max(1,parseInt(gv('gScreens'),10)||20),
+    research:document.getElementById('gcResearch').checked,
+    gui:document.getElementById('gcGui').checked,
+    pub:document.getElementById('gcPub').checked,
+    dev:document.getElementById('gcDev').checked,
+    stab:document.getElementById('gcStab').checked,
+    qa:gv('gQa')};
+  const picked=GEX.filter(e=>{const el=document.getElementById('gk_'+e.k);return el?el.checked:false;});
+  return {tpl:GTPLK,mode:GMODE,scope:scope,extras:picked,
+    start:gv('gStart'),open:gv('gOpen'),
+    buffer:Math.max(0,parseInt(gv('gBuf'),10)||0),
+    md:Math.max(1,Math.round((parseFloat(gv('gMM'))||0)*(MODEL.settings.md_per_mm||20))),
+    people:Math.max(1,parseInt(gv('gPeople'),10)||1)};
+}
+function gValidate1(){
+  const e=document.getElementById('gErr1');e.textContent='';
+  const st=gv('gStart'); if(!st){e.textContent='착수일을 입력하세요';return false;}
+  if(GMODE!=='C'){
+    const op=gv('gOpen');
+    if(!op){e.textContent='목표 오픈일을 입력하세요';return false;}
+    if(D(op)<=D(st)){e.textContent='오픈일은 착수일보다 뒤여야 합니다';return false;}
+    const wd=gWdCount(st,op)-Math.max(0,parseInt(gv('gBuf'),10)||0);
+    if(wd<1){e.textContent='버퍼를 빼면 남는 근무일이 없습니다 — 기간이나 버퍼를 조정하세요';return false;}
+  }
+  if(GMODE!=='B'&&!(parseFloat(gv('gMM'))>0)){e.textContent='총 공수(M/M)를 입력하세요';return false;}
+  if(GMODE!=='A'&&!(parseInt(gv('gPeople'),10)>0)){e.textContent='투입 인원을 입력하세요';return false;}
+  return true;
+}
+function gRenderKeys(){
+  const box=document.getElementById('gKeyOut');
+  if(!GEX.length){box.innerHTML='<div class="gnote" style="margin-top:10px">추천할 만한 키워드를 찾지 못했습니다 — 범위 체크만으로 진행됩니다</div>';return;}
+  const grp={};GEX.forEach(e=>{(grp[e.l]=grp[e.l]||[]).push(e);});
+  box.innerHTML='<div class="gkey"><div class="hd">요구사항에서 찾은 추가 태스크 '+GEX.length+'개 — 체크한 것만 반영됩니다</div>'+
+    Object.keys(grp).map(l=>grp[l].map(e=>
+      '<label><input type="checkbox" id="gk_'+e.k+'" checked><span>'+esc(e.n)+'</span><span class="tg">'+esc(e.l)+'</span></label>'
+    ).join('')).join('')+'</div>';
+}
+function gRenderPreview(){
+  const el=document.getElementById('gPreview'),R=GRES;
+  if(!R){el.innerHTML='<div class="gnote">생성 결과를 만들지 못했습니다 — 범위 체크를 확인해 주세요</div>';return;}
+  const mpm=MODEL.settings.md_per_mm||20;
+  const mm=Math.round(R.totalMD/mpm*10)/10;
+  const phn={};R.tpl.phases.forEach(p=>phn[p.id]=p.name);
+  const roles=Object.keys(R.mdRole).sort((a,b)=>R.mdRole[b]-R.mdRole[a]);
+  let rows='',cur='';
+  R.tasks.forEach(t=>{
+    if(t.phase!==cur){cur=t.phase;rows+='<tr class="phr"><td colspan="4">'+esc(phn[cur]||cur)+'</td></tr>';}
+    rows+='<tr><td class="mono">'+esc(t.id)+'</td><td class="nm">'+esc(t.name)+'</td><td>'+esc(t.role)+
+      '</td><td class="mono">'+t.md+' MD · '+t.dur+'일</td></tr>';
+  });
+  el.innerHTML=
+    '<div class="gsum">'+
+      '<div><span>착수 → 오픈</span><b style="font-size:12.5px">'+esc(R.start)+'<br>→ '+esc(R.open)+'</b></div>'+
+      '<div><span>총 공수</span><b>'+mm+' <em>M/M · '+R.totalMD+' MD</em></b></div>'+
+      '<div><span>최대 동시 인원</span><b>'+R.head+' <em>명 (단계 기준)</em></b></div>'+
+      '<div><span>임계경로</span><b>'+R.cpWd+' <em>근무일</em></b></div>'+
+      '<div><span>가용 기간</span><b>'+R.wdAvail+' <em>근무일 (버퍼 '+R.buffer+' 제외)</em></b></div>'+
+      '<div><span>여유</span><b style="color:'+(R.slack<0?'#c0392b':'#2f8f4a')+'">'+(R.slack>=0?'+':'')+R.slack+' <em>근무일</em></b></div>'+
+    '</div>'+
+    '<div class="gvd '+R.verdict+'">'+esc(R.msg)+'</div>'+
+    '<div class="gfix">'+R.fixes.map(f=>'<div class="r"><b>'+esc(f.t)+'</b><span>'+esc(f.d)+'</span></div>').join('')+'</div>'+
+    '<div class="field"><label>역할별 투입</label><div class="gprev" style="max-height:170px"><table>'+
+      '<thead><tr><th>역할</th><th>인원</th><th>공수</th><th>인력풀 보유(투입률 반영)</th></tr></thead><tbody>'+
+      roles.map(r=>'<tr><td>'+esc(r)+'</td><td class="mono">'+(R.par[r]||1)+' 명</td><td class="mono">'+R.mdRole[r]+' MD</td>'+
+        '<td class="mono"'+(((R.pool[r]||0)<(R.par[r]||1))?' style="color:#c0392b;font-weight:700"':'')+'>'+
+        (Math.round((R.pool[r]||0)*10)/10)+' 명</td></tr>').join('')+
+    '</tbody></table></div></div>'+
+    '<div class="field"><label>생성될 태스크 '+R.tasks.length+'개</label><div class="gprev"><table>'+
+      '<thead><tr><th>ID</th><th>태스크</th><th>역할</th><th>공수 · 기간</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+    '<div class="field"><label>반영 방식</label><div class="npopt">'+
+      '<label><input type="radio" name="gapply" value="new" checked><span><b>새 프로젝트로 생성</b>'+
+        '<small>현재 프로젝트는 그대로 두고 새 프로젝트를 만듭니다</small></span></label>'+
+      '<label><input type="radio" name="gapply" value="over"><span><b>현재 프로젝트에 덮어쓰기</b>'+
+        '<small>"'+esc(MODEL.settings.project)+'"의 단계·태스크를 교체합니다 — 되돌리기로 복구할 수 있습니다</small></span></label>'+
+    '</div></div>'+
+    '<div class="field" id="gNewNameF"><label>새 프로젝트명</label><input id="gNewName" value="'+esc(R.tpl.label)+'"></div>';
+  const upd=()=>{const v=(document.querySelector('input[name="gapply"]:checked')||{}).value;
+    document.getElementById('gNewNameF').style.display=v==='over'?'none':'';};
+  document.querySelectorAll('input[name="gapply"]').forEach(x=>x.onchange=upd); upd();
+}
+function gRun(){
+  const cfg=gCfg();
+  GRES=gSolve(cfg);
+  gRenderPreview();
+}
+function gApplyNow(){
+  if(!GRES){toast('생성 결과가 없습니다');return;}
+  const R=GRES,tpl=R.tpl;
+  const how=(document.querySelector('input[name="gapply"]:checked')||{}).value||'new';
+  if(how==='over'){
+    snapshot();
+    MODEL.phases=clone(tpl.phases);
+    MODEL.roles=clone(tpl.roles);
+    MODEL.tasks=clone(R.tasks);
+    MODEL.settings.today=R.start;
+    MODEL.settings.buffer_wd=R.buffer;
+    roleFilter='';
+    closeAll(); VIEW='project'; stampEdit(); render();
+    toast('현재 프로젝트 일정을 새로 생성했습니다 — 되돌리기로 복구할 수 있습니다');
+    return;
+  }
+  const nm=(document.getElementById('gNewName').value||'').trim()||tpl.label;
+  const np=normProj({
+    settings:{project:nm,today:R.start,md_per_mm:MODEL.settings.md_per_mm||20,buffer_wd:R.buffer,
+      weekend_default:MODEL.settings.weekend_default||'off'},
+    statuses:clone(MODEL.statuses),phases:clone(tpl.phases),roles:clone(tpl.roles),
+    holidays:clone(MODEL.holidays||[]),people:[],tasks:clone(R.tasks)},WS.projects.length);
+  np.id='p'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
+  np.settings.my_role='PM';
+  np.settings.color=PCOL[WS.projects.length%PCOL.length];
+  WS.projects.push(np);
+  closeAll(); switchProject(np.id);
+  toast('"'+nm+'" 프로젝트를 생성했습니다 ('+R.tasks.length+'개 태스크)');
+}
+document.getElementById('genBtn').onclick=()=>openGen();
+document.querySelectorAll('#gModeSeg button').forEach(b=>b.onclick=function(){GMODE=this.getAttribute('data-gm');gModeUI();});
+document.getElementById('gExtractBtn').onclick=()=>{GEX=gExtract(gv('gReq'));gRenderKeys();};
+document.getElementById('gPrev').onclick=()=>{if(GSTEP>1){GSTEP--;gStepUI();}};
+document.getElementById('gNext').onclick=()=>{
+  if(GSTEP===1){ if(!gValidate1())return; GSTEP=2; gStepUI(); return; }
+  if(GSTEP===2){ GSTEP=3; gStepUI(); gRun(); }
+};
+document.getElementById('gApply').onclick=()=>gApplyNow();
 
 mode=MODEL.settings.weekend_default==='on'?'on':'off';
 syncWeekendUI();
