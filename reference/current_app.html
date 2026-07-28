@@ -595,6 +595,58 @@ accent-color:var(--acc);cursor:pointer;-webkit-appearance:auto;appearance:auto}
 #npOverlay .field:last-child{margin-bottom:4px}
 
 .rolesel{font-size:13px;font-family:inherit;color:var(--ink);padding:5px 26px 5px 9px;border:1px solid var(--acc);border-radius:8px;background-color:#fff;box-shadow:0 0 0 3px rgba(78,203,106,.2);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px}
+
+/* ============ 인력풀 ============ */
+#poolView{display:none}
+body.view-pool #poolView{display:block}
+body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.view-pool .panel,body.view-pool .appctl{display:none!important}
+.pool-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:2px 4px 0;margin-bottom:18px}
+.pool-hd h1{font-size:25px;margin:0 0 7px;letter-spacing:-.01em}
+.pool-sub{color:#8a919b;font-size:12.5px;line-height:1.6}
+.pool-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+.psearch{font-family:inherit;font-size:13px;color:var(--ink);padding:8px 12px;border:1px solid var(--gbrd);background:var(--glass-2);border-radius:9px;width:230px}
+.psearch:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(78,203,106,.18)}
+.pfilter{font-family:inherit;font-size:13px;color:var(--ink);padding:8px 32px 8px 12px;border:1px solid var(--gbrd);background-color:var(--glass-2);border-radius:9px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:15px}
+.pool-cnt{margin-left:auto;font-family:var(--mono);font-size:12px;color:#8a919b}
+.ptable{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--gbrd);border-radius:12px;overflow:hidden;box-shadow:var(--gshadow)}
+.ptable th{font-size:11.5px;color:var(--sub);font-weight:650;text-align:left;padding:11px 14px;background:#fafbfc;border-bottom:1px solid var(--line);white-space:nowrap}
+.ptable td{font-size:13.5px;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ptable tbody tr:last-child td{border-bottom:0}
+.ptable tbody tr:hover td{background:#fafbfc}
+.ptable .nm{font-weight:650;white-space:nowrap}
+.ptable .mono{font-family:var(--mono);font-size:12px;color:#5b6470;white-space:nowrap}
+.prole{display:inline-block;padding:3px 8px;border-radius:6px;background:#eef0f2;color:#5b6470;font-size:11.5px;font-weight:650;white-space:nowrap}
+.prole.none{background:#f6eaea;color:#b05a4e}
+.pact{display:flex;gap:6px;justify-content:flex-end}
+.pact button{font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;color:#5b6470}
+.pact button:hover{border-color:#c8cdd4;color:var(--ink)}
+.pact button.del:hover{border-color:#e5a1a1;color:#c0392b}
+.pool-empty{padding:44px 16px;text-align:center;color:#8a919b;font-size:13.5px;background:#fff;border:1px solid var(--gbrd);border-radius:12px;box-shadow:var(--gshadow)}
+.pool-wrap{overflow-x:auto}
+/* 프로젝트 참여자 선택 */
+.pickbox{max-height:236px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:5px;background:#fff}
+.pick-g{font-size:11px;font-weight:700;color:#9aa2ab;padding:8px 9px 4px;letter-spacing:.02em}
+.pickbox label{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;font-size:13.5px;cursor:pointer}
+.pickbox label:hover{background:#f3f4f6}
+.pickbox input[type=checkbox]{width:16px;height:16px;accent-color:var(--acc);flex:none;cursor:pointer}
+.pickbox .org{margin-left:auto;color:#9aa2ab;font-size:11.5px;font-family:var(--mono);white-space:nowrap}
+.pickbox .pk-empty{color:var(--sub);font-size:13px;padding:12px 10px;line-height:1.6}
+/* 가져오기 */
+.imp-tabs{display:flex;gap:6px;margin-bottom:12px}
+.imp-tabs button{font-family:inherit;font-size:13px;font-weight:650;padding:8px 15px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;color:#8a919b}
+.imp-tabs button.on{border-color:var(--acc);color:#2f8f4a;background:rgba(78,203,106,.09)}
+.imp-pane{display:none}
+.imp-pane.on{display:block}
+#impPaste{min-height:132px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.65}
+.imp-prev{max-height:224px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}
+.imp-prev table{width:100%;border-collapse:collapse;font-size:12.5px}
+.imp-prev th{position:sticky;top:0;background:#fafbfc;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:11px;color:var(--sub);font-weight:650}
+.imp-prev td{padding:7px 10px;border-bottom:1px solid #f0f1f3;white-space:nowrap}
+.imp-prev tr:last-child td{border-bottom:0}
+.imp-prev .tagN{color:#1a7f37;font-weight:700;font-size:11px}
+.imp-prev .tagU{color:#1a56db;font-weight:700;font-size:11px}
+.imp-note{font-size:12px;color:#8a919b;line-height:1.7;margin-top:10px}
+.imp-note b{color:#5b6470}
 </style></head>
 <body><div class="wrap">
 <header class="appbar">
@@ -626,6 +678,26 @@ accent-color:var(--acc);cursor:pointer;-webkit-appearance:auto;appearance:auto}
     <div class="hcard" id="wloadCard"></div>
   </div>
   <div class="hcard" id="ptlCard"></div>
+</div>
+
+<!-- ===== 인력풀 ===== -->
+<div id="poolView">
+  <div class="pool-hd">
+    <div>
+      <h1>인력풀</h1>
+      <div class="pool-sub">워크스페이스 공통 인력 마스터입니다. 여기 등록된 인력 중에서 프로젝트별 참여자를 선택합니다.</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="poolImpBtn">가져오기</button>
+      <button class="btn primary" id="poolAddBtn">+ 인력 추가</button>
+    </div>
+  </div>
+  <div class="pool-bar">
+    <input class="psearch" id="poolQ" placeholder="이름·역할·소속·이메일 검색">
+    <select class="pfilter" id="poolRf"></select>
+    <span class="pool-cnt" id="poolCnt"></span>
+  </div>
+  <div class="pool-wrap" id="poolBody"></div>
 </div>
 
 <div class="ctrlbar">
@@ -757,8 +829,9 @@ accent-color:var(--acc);cursor:pointer;-webkit-appearance:auto;appearance:auto}
     <div class="sect">파트 (역할)</div>
     <div class="hrow"><input id="rName" placeholder="파트·역할명 (예: UX, FE, 디자인)"><button class="btn small" id="rAdd">추가</button></div>
     <div class="chiprow" id="rChips"></div>
-    <div class="sect">인력 (담당자)</div>
-    <div class="hrow"><input id="pName" placeholder="담당자 이름 (예: 홍길동)"><button class="btn small" id="pAdd">추가</button></div>
+    <div class="sect">참여 인력 <span style="font-weight:400;color:#9aa2ab;font-size:12px">— 인력풀에서 선택</span></div>
+    <div class="hrow"><input id="pName" placeholder="인력풀 검색 (이름·역할·소속)"><button class="btn small" id="pAdd">+ 새 인력</button></div>
+    <div class="pickbox" id="pPick"></div>
     <div class="chiprow" id="pChips"></div>
     <div class="sect">공휴일</div>
     <div class="hrow"><input id="hDate" type="date"><input id="hName" placeholder="공휴일명"><button class="btn small" id="hAdd">추가</button></div>
@@ -791,6 +864,49 @@ accent-color:var(--acc);cursor:pointer;-webkit-appearance:auto;appearance:auto}
   </div>
   <div class="mfoot"><span style="font-size:12px;color:#9aa2ab">담당자·공휴일 설정은 새 프로젝트에도 복사됩니다</span>
     <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="npCreate">만들기</button></div>
+  </div>
+</div></div>
+
+<!-- ===== 인력 추가·수정 ===== -->
+<div class="overlay" id="personOverlay"><div class="modal">
+  <h2><span id="personTitle">인력 추가</span><span class="x" data-close>×</span></h2>
+  <div class="mbody">
+    <div class="row2">
+      <div class="field"><label>이름 *</label><input id="qName" placeholder="예: 홍길동"><div class="err" id="errQName"></div></div>
+      <div class="field"><label>역할(파트) *</label><input id="qRole" list="poolRoles" placeholder="예: UX"><datalist id="poolRoles"></datalist><div class="err" id="errQRole"></div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>소속</label><input id="qOrg" placeholder="예: pxd"></div>
+      <div class="field"><label>직급</label><input id="qGrade" placeholder="예: 책임"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>이메일</label><input id="qEmail" placeholder="예: hong@pxd.co.kr"></div>
+      <div class="field"><label>투입률 (%)</label><input id="qAlloc" type="number" min="0" max="100" step="5" value="100"></div>
+    </div>
+  </div>
+  <div class="mfoot"><span style="font-size:12px;color:#9aa2ab">투입률은 주간 부하 한계선 계산에 반영됩니다</span>
+    <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="personSave">저장</button></div>
+  </div>
+</div></div>
+
+<!-- ===== 인력풀 가져오기 ===== -->
+<div class="overlay" id="impOverlay"><div class="modal wide">
+  <h2><span>인력풀 가져오기</span><span class="x" data-close>×</span></h2>
+  <div class="mbody">
+    <div class="imp-tabs"><button type="button" data-imp="paste" class="on">붙여넣기</button><button type="button" data-imp="file">CSV 파일</button></div>
+    <div class="imp-pane on" id="impPastePane">
+      <div class="field"><label>구글시트·엑셀에서 표 영역을 복사해 그대로 붙여넣으세요</label>
+        <textarea id="impPaste" placeholder="이름&#9;역할&#9;소속&#9;직급&#9;이메일&#9;투입률&#10;홍길동&#9;UX&#9;pxd&#9;책임&#9;hong@pxd.co.kr&#9;100"></textarea></div>
+    </div>
+    <div class="imp-pane" id="impFilePane">
+      <div class="field"><label>CSV 파일 선택 (.csv)</label><input id="impFile" type="file" accept=".csv,text/csv,text/plain"></div>
+      <div class="imp-note" id="impFileName"></div>
+    </div>
+    <div class="imp-note">첫 줄이 머리글이면 자동 인식합니다 — <b>이름/성명/name</b>, <b>역할/파트/직무/role</b>, <b>소속/회사/org</b>, <b>직급/grade</b>, <b>이메일/email</b>, <b>투입률/투입/alloc</b>. 머리글이 없으면 <b>이름 · 역할 · 소속 · 직급 · 이메일 · 투입률</b> 순서로 읽습니다. 이메일(없으면 이름)이 같으면 기존 인력을 갱신합니다.</div>
+    <div id="impResult"></div>
+  </div>
+  <div class="mfoot"><span id="impSum" style="font-size:12px;color:#9aa2ab">붙여넣거나 파일을 선택하면 미리보기가 표시됩니다</span>
+    <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="impApply">가져오기</button></div>
   </div>
 </div></div>
 
@@ -827,6 +943,29 @@ function normProj(p,i){
   p.tasks.forEach(t=>{t.deps=t.deps||[];t.assignees=t.assignees||[];});
   return p;
 }
+// ---- 인력풀(워크스페이스 공통 인력 마스터) ----
+function normPerson(q,i){
+  q=q||{};
+  q.id=q.id||('u'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36)+String(i||0));
+  q.name=String(q.name||'').trim();
+  q.role=String(q.role||'').trim();
+  q.org=String(q.org||'').trim();
+  q.grade=String(q.grade||'').trim();
+  q.email=String(q.email||'').trim();
+  const a=parseFloat(q.alloc);
+  q.alloc=isNaN(a)?100:Math.max(0,Math.min(100,Math.round(a)));
+  return q;
+}
+const poolGet=n=>(WS.pool||[]).find(q=>q.name===n)||null;
+const poolRole=n=>{const q=poolGet(n);return q&&q.role?q.role:'';};
+const poolOrg=n=>{const q=poolGet(n);return q?[q.org,q.grade].filter(Boolean).join(' '):'';};
+const poolAlloc=n=>{const q=poolGet(n);return q?q.alloc:100;};
+function allPartRoles(){
+  const s=new Set();
+  WS.projects.forEach(p=>(p.roles||[]).forEach(r=>s.add(r)));
+  (WS.pool||[]).forEach(q=>{if(q.role)s.add(q.role);});
+  return [...s];
+}
 function defaultWS(){
   const p=normProj(clone(SEED),0); p.id='p1'; p.settings.my_role='PM';
   return {v:2, me:'', current:p.id, projects:[p]};
@@ -846,11 +985,24 @@ function loadWS(){
   w.v=2; w.me=w.me||'';
   w.projects=w.projects.map((p,i)=>normProj(p,i));
   if(!w.projects.some(p=>p.id===w.current))w.current=w.projects[0].id;
+  // ---- 인력풀 마이그레이션: 기존 프로젝트별 이름들을 공통 풀로 승격 ----
+  w.pool=(w.pool||[]).map((q,i)=>normPerson(q,i)).filter(q=>q.name);
+  const seen=new Set(w.pool.map(q=>q.name));
+  w.projects.forEach(p=>{
+    p.people=(p.people||[]).map(x=>String(x||'').trim()).filter(Boolean);
+    p.tasks.forEach(t=>(t.assignees||[]).forEach(x=>{
+      const nm=String(x||'').trim(); if(nm&&p.people.indexOf(nm)<0)p.people.push(nm);
+    }));
+    p.people.forEach(nm=>{
+      if(seen.has(nm))return; seen.add(nm);
+      w.pool.push(normPerson({name:nm,role:''},w.pool.length));
+    });
+  });
   return w;
 }
 let WS=loadWS();
 let MODEL=WS.projects.find(p=>p.id===WS.current);
-let VIEW='home';                                        // 'home' | 'project'
+let VIEW='home';                              // 'home' | 'project' | 'pool'
 const curProj=()=>WS.projects.find(p=>p.id===WS.current);
 // 엔진(compute/rollup)은 전역 MODEL을 읽으므로, 다른 프로젝트 계산은 잠시 바꿔치기해서 수행
 function withProject(p,fn){const prev=MODEL;MODEL=p;try{return fn();}finally{MODEL=prev;}}
@@ -1025,9 +1177,11 @@ function rollup(){
 // ---------- render ----------
 function render(){
   document.body.classList.toggle('view-home',VIEW==='home');
+  document.body.classList.toggle('view-pool',VIEW==='pool');
   renderNav();
   renderProject();
   if(VIEW==='home')renderHome();
+  if(VIEW==='pool')renderPool();
 }
 function renderProject(){
   const sc=compute(mode), roll=rollup(), PM=phaseMap();
@@ -1187,7 +1341,9 @@ function inlineRole(td,id){
   pop.innerHTML=
     '<div class="rp-row"><span class="rp-lab">파트</span><select class="rp-part">'+MODEL.roles.map(r=>'<option'+(r===t.role?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select></div>'+
     '<div class="rp-lab">담당자</div>'+
-    '<div class="rp-people">'+(MODEL.people.length?MODEL.people.map(p=>'<label><input type="checkbox" value="'+esc(p)+'"'+(asg.has(p)?' checked':'')+'>'+esc(p)+'</label>').join(''):'<div class="rp-empty">등록된 인력이 없습니다. 아래에서 추가하세요.</div>')+'</div>'+
+    '<div class="rp-people">'+(MODEL.people.length?poolSort(MODEL.people,t.role).map(p=>{const pr=poolRole(p);
+      return '<label><input type="checkbox" value="'+esc(p)+'"'+(asg.has(p)?' checked':'')+'><span>'+esc(p)+'</span>'+
+        (pr?'<span style="margin-left:auto;font-size:11px;font-weight:650;color:'+(pr===t.role?'#2f8f4a':'#9aa2ab')+'">'+esc(pr)+'</span>':'')+'</label>';}).join(''):'<div class="rp-empty">이 프로젝트의 참여자가 없습니다. 아래에서 추가하세요.</div>')+'</div>'+
     '<div class="rp-add"><input class="rp-newname" placeholder="새 인력 이름"><button class="btn small rp-addbtn" type="button">추가</button></div>'+
     '<div class="rp-foot"><button class="btn small primary rp-done" type="button">완료</button></div>';
   document.body.appendChild(pop);
@@ -1196,9 +1352,13 @@ function inlineRole(td,id){
   pop.style.left=Math.min(window.scrollX+r.left, window.scrollX+window.innerWidth-pw-8)+'px';
   pop.style.top=(window.scrollY+r.bottom+4)+'px';
   const addBtn=pop.querySelector('.rp-addbtn'), nameInp=pop.querySelector('.rp-newname');
-  addBtn.onclick=()=>{const n=nameInp.value.trim();if(!n)return;if(MODEL.people.indexOf(n)<0)MODEL.people.push(n);
+  addBtn.onclick=()=>{const n=nameInp.value.trim();if(!n)return;
+    if(MODEL.people.indexOf(n)<0)MODEL.people.push(n);
+    poolEnsure(n,t.role);
     const wrap=pop.querySelector('.rp-people'),empty=wrap.querySelector('.rp-empty');if(empty)empty.remove();
-    const l=document.createElement('label');l.innerHTML='<input type="checkbox" value="'+esc(n)+'" checked>'+esc(n);wrap.appendChild(l);nameInp.value='';nameInp.focus();};
+    if(!wrap.querySelector('input[value="'+n.replace(/"/g,'&quot;')+'"]')){
+      const l=document.createElement('label');l.innerHTML='<input type="checkbox" value="'+esc(n)+'" checked><span>'+esc(n)+'</span>';wrap.appendChild(l);}
+    nameInp.value='';nameInp.focus();};
   nameInp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addBtn.onclick();}};
   function commit(){
     const part=pop.querySelector('.rp-part').value;
@@ -1285,15 +1445,18 @@ function switchProject(id){
   persist(); render();
 }
 function goHome(){VIEW='home';render();window.scrollTo(0,0);}
+function goPool(){VIEW='pool';render();window.scrollTo(0,0);}
 
 // ---- GNB: 홈 탭 + 현재 프로젝트 탭(+전환 메뉴) ----
 function renderNav(){
   const p=curProj();
   document.getElementById('appnav').innerHTML=
     '<a data-nav="home"'+(VIEW==='home'?' class="on"':'')+'>내 프로젝트</a>'+
+    '<a data-nav="pool"'+(VIEW==='pool'?' class="on"':'')+'>인력풀</a>'+
     '<a data-nav="proj" class="projtab'+(VIEW==='project'?' on':'')+'" title="'+esc(p.settings.project)+'">'+
       '<span class="ptname">'+esc(p.settings.project)+'</span><i class="cv" data-pmenu title="프로젝트 전환">▾</i></a>';
   document.querySelector('[data-nav="home"]').onclick=goHome;
+  document.querySelector('[data-nav="pool"]').onclick=goPool;
   document.querySelector('[data-nav="proj"]').onclick=e=>{
     if(e.target.closest('[data-pmenu]')){e.stopPropagation();openProjMenu(e.currentTarget);return;}
     VIEW='project';render();
@@ -1344,7 +1507,8 @@ function renderHome(){
   // 담당자 자동완성 목록
   const all=new Set();
   WS.projects.forEach(p=>{(p.people||[]).forEach(n=>all.add(n));p.tasks.forEach(t=>(t.assignees||[]).forEach(n=>all.add(n)));});
-  document.getElementById('peopleAll').innerHTML=[...all].sort().map(n=>'<option value="'+esc(n)+'">').join('');
+  const dlNames=new Set(all);(WS.pool||[]).forEach(q=>dlNames.add(q.name));
+  document.getElementById('peopleAll').innerHTML=[...dlNames].sort().map(n=>'<option value="'+esc(n)+'">').join('');
   const meInp=document.getElementById('meInp');
   if(document.activeElement!==meInp)meInp.value=me;
 
@@ -1447,7 +1611,11 @@ function renderHome(){
   // ---- 주간 부하 ----
   const wks=[];let w0=D(thisWk);
   for(let i=0;i<8;i++){wks.push(iso(w0));w0=addDays(w0,7);}
-  const cap=wlMode==='mine'?5:Math.max(5,5*Math.max(1,all.size));
+  // 인력풀 투입률(%) 반영: 1인 주 5MD × 투입률
+  const r1=x=>Math.round(x*10)/10;
+  const cap=wlMode==='mine'
+    ? Math.max(1,r1(5*(poolAlloc(me)/100)))
+    : Math.max(5,r1([...all].reduce((s2,nm)=>s2+5*(poolAlloc(nm)/100),0)));
   const maxVal=Math.max(cap*1.15,...wks.map(wkTot));
   const rowsW=wks.map(k=>{
     const b=bucket[k]||{},tot=wkTot(k);
@@ -1461,7 +1629,7 @@ function renderHome(){
     '<h3>주간 부하 <em>MD 기준 · 8주</em><span class="seg"><button data-wl="mine" class="'+(wlMode==='mine'?'on':'')+'">내 담당</button><button data-wl="all" class="'+(wlMode==='all'?'on':'')+'">전체</button></span></h3>'+
     (wlMode==='mine'&&!me?'<div class="hempty">담당자 이름을 입력하면 내 주별 부하를 볼 수 있습니다. <b>전체</b>로 전환하면 모든 작업의 부하를 봅니다.</div>':
       rowsW+'<div class="wl-leg">'+WS.projects.map(p=>'<i style="--c:'+p.settings.color+'">'+esc(p.settings.project)+'</i>').join('')+
-      '<i style="--c:transparent;color:#c0392b">┊ 주 '+cap+'MD 한계선</i></div>');
+      '<i style="--c:transparent;color:#c0392b">┊ 주 '+cap+'MD 한계선'+(wlMode==='mine'&&me&&poolAlloc(me)!==100?' · 투입률 '+poolAlloc(me)+'%':'')+'</i></div>');
   document.querySelectorAll('[data-wl]').forEach(b=>b.onclick=()=>{wlMode=b.getAttribute('data-wl');renderHome();});
 
   // ---- 통합 타임라인 ----
@@ -1592,13 +1760,22 @@ function openTask(id,presetPhase){
   document.getElementById('taskOverlay').classList.add('on');
 }
 function renderFAsg(checked){
-  document.getElementById('fAsg').innerHTML=MODEL.people.length?MODEL.people.map(p=>'<label><input type="checkbox" value="'+esc(p)+'"'+(checked.indexOf(p)>=0?' checked':'')+'><span>'+esc(p)+'</span></label>').join(''):'<div style="color:var(--sub);font-size:13px;padding:2px 4px">아직 등록된 인력이 없습니다 — 아래에서 바로 추가하세요</div>';
+  const pref=(document.getElementById('fRole')||{}).value||'';
+  const names=poolSort(MODEL.people||[],pref);
+  document.getElementById('fAsg').innerHTML=names.length?names.map(p=>{
+    const pr=poolRole(p),og=poolOrg(p);
+    return '<label><input type="checkbox" value="'+esc(p)+'"'+(checked.indexOf(p)>=0?' checked':'')+'><span>'+esc(p)+
+      (pr?' <i style="font-style:normal;font-size:11px;font-weight:650;color:'+(pref&&pr===pref?'#2f8f4a':'#9aa2ab')+'">'+esc(pr)+'</i>':'')+
+      (og?' <i style="font-style:normal;font-size:11px;color:#b6bcc4">'+esc(og)+'</i>':'')+'</span></label>';
+  }).join(''):'<div style="color:var(--sub);font-size:13px;padding:2px 4px">이 프로젝트의 참여자가 없습니다 — 아래에서 바로 추가하거나, 설정 › 참여 인력에서 인력풀에서 선택하세요</div>';
 }
+function fAsgChecked(){return [...document.querySelectorAll('#fAsg input:checked')].map(c=>c.value);}
 document.getElementById('fPersonAdd').onclick=()=>{
   const inp=document.getElementById('fNewPerson'), name=inp.value.trim();
   if(!name) return;
-  const checked=[...document.querySelectorAll('#fAsg input:checked')].map(c=>c.value);
+  const checked=fAsgChecked();
   if(MODEL.people.indexOf(name)<0){ snapshot(); MODEL.people.push(name); }
+  poolEnsure(name,(document.getElementById('fRole')||{}).value||'');
   if(checked.indexOf(name)<0) checked.push(name);
   renderFAsg(checked); inp.value=""; toast('인력 추가됨: '+name);
 };
@@ -1656,18 +1833,47 @@ function openSettings(){
   document.getElementById('sToday').value=MODEL.settings.today;
   document.getElementById('sBuffer').value=MODEL.settings.buffer_wd;
   document.getElementById('sMdmm').value=MODEL.settings.md_per_mm;
-  renderHchips(); renderRchips(); renderPchips(); renderPhList();
+  pickQ=''; document.getElementById('pName').value='';
+  renderHchips(); renderRchips(); renderPPick(); renderPchips(); renderPhList();
   document.getElementById('setOverlay').classList.add('on');
 }
 function renderPchips(){
-  document.getElementById('pChips').innerHTML=MODEL.people.length?MODEL.people.map(p=>'<span class="hchip"><b>'+esc(p)+'</b> <span class="del" data-pdel="'+esc(p)+'">×</span></span>').join(''):'<span style="color:var(--sub);font-size:13px">등록된 인력이 없습니다</span>';
+  const ps=MODEL.people||[];
+  document.getElementById('pChips').innerHTML=ps.length?poolSort(ps,'').map(p=>{const pr=poolRole(p);
+    return '<span class="hchip"><b>'+esc(p)+'</b>'+(pr?' <i style="font-style:normal;color:#9aa2ab;font-size:11px">'+esc(pr)+'</i>':'')+' <span class="del" data-pdel="'+esc(p)+'">×</span></span>';}).join(''):'<span style="color:var(--sub);font-size:13px">선택된 참여자가 없습니다 — 위 목록에서 체크하세요</span>';
   document.querySelectorAll('[data-pdel]').forEach(el=>el.onclick=()=>{
     const p=el.getAttribute('data-pdel'), used=MODEL.tasks.filter(t=>(t.assignees||[]).indexOf(p)>=0).length;
-    if(used){toast('"'+p+'" 은(는) 태스크 '+used+'개에 배정되어 삭제할 수 없습니다');return;}
-    MODEL.people=MODEL.people.filter(x=>x!==p);renderPchips();
+    if(used){toast('"'+p+'" 은(는) 태스크 '+used+'개에 배정되어 제외할 수 없습니다');return;}
+    MODEL.people=MODEL.people.filter(x=>x!==p);renderPPick();renderPchips();
   });
 }
-document.getElementById('pAdd').onclick=()=>{const n=document.getElementById('pName').value.trim();if(!n)return;if(MODEL.people.indexOf(n)>=0){toast('이미 있는 인력입니다');return;}MODEL.people.push(n);document.getElementById('pName').value='';renderPchips();};
+let pickQ='';
+function renderPPick(){
+  const box=document.getElementById('pPick'); if(!box)return;
+  const kw=pickQ.trim().toLowerCase(), sel=new Set(MODEL.people||[]);
+  const list=(WS.pool||[]).filter(q=>!kw||(q.name+' '+q.role+' '+q.org+' '+q.grade+' '+q.email).toLowerCase().indexOf(kw)>=0);
+  const g={};list.forEach(q=>{const k=q.role||'역할 미지정';(g[k]=g[k]||[]).push(q);});
+  const keys=Object.keys(g).sort((a,b)=>a==='역할 미지정'?1:(b==='역할 미지정'?-1:a.localeCompare(b)));
+  box.innerHTML=list.length?keys.map(k=>'<div class="pick-g">'+esc(k)+' <span style="color:#c3c8ce">'+g[k].length+'</span></div>'+
+    g[k].sort((a,b)=>a.name.localeCompare(b.name)).map(q=>'<label><input type="checkbox" data-ppick value="'+esc(q.name)+'"'+(sel.has(q.name)?' checked':'')+'><span>'+esc(q.name)+'</span>'+
+      '<span class="org">'+esc([q.org,q.grade].filter(Boolean).join(' '))+(q.alloc!==100?' '+q.alloc+'%':'')+'</span></label>').join('')).join('')
+    :'<div class="pk-empty">'+((WS.pool||[]).length?'검색 결과가 없습니다':'인력풀이 비어 있습니다 — <b>+ 새 인력</b>으로 등록하거나 GNB <b>인력풀</b>에서 가져오기 하세요')+'</div>';
+  box.querySelectorAll('[data-ppick]').forEach(c=>c.onchange=()=>{
+    const nm=c.value;
+    if(c.checked){ if((MODEL.people||[]).indexOf(nm)<0)MODEL.people.push(nm); }
+    else{
+      const used=MODEL.tasks.filter(t=>(t.assignees||[]).indexOf(nm)>=0).length;
+      if(used){c.checked=true;toast('"'+nm+'" 은(는) 태스크 '+used+'개에 배정되어 제외할 수 없습니다');return;}
+      MODEL.people=MODEL.people.filter(x=>x!==nm);
+    }
+    renderPchips();
+  });
+}
+document.getElementById('pName').addEventListener('input',e=>{pickQ=e.target.value;renderPPick();});
+document.getElementById('pAdd').onclick=()=>{
+  const pre=document.getElementById('pName').value.trim();
+  openPerson(null,nm=>{ if((MODEL.people||[]).indexOf(nm)<0)MODEL.people.push(nm); pickQ='';document.getElementById('pName').value='';renderPPick();renderPchips(); },pre);
+};
 function renderRchips(){
   document.getElementById('rChips').innerHTML=MODEL.roles.map(r=>'<span class="hchip rtip" data-rtip="'+esc(roleTip(r))+'"><b>'+esc(r)+'</b> <span class="del" data-rdel="'+esc(r)+'">×</span></span>').join('');
   document.querySelectorAll('[data-rdel]').forEach(el=>el.onclick=()=>{
@@ -1726,6 +1932,245 @@ function closeAll(){document.querySelectorAll('.overlay').forEach(o=>o.classList
 document.querySelectorAll('[data-close]').forEach(el=>el.onclick=closeAll);
 document.querySelectorAll('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o)closeAll();});
 document.addEventListener('keydown',e=>{if(e.key==="Escape")closeAll();});
+
+// ================= 인력풀 =================
+function poolSort(names,prefRole){
+  return names.slice().sort((a,b)=>{
+    const ra=poolRole(a),rb=poolRole(b);
+    const pa=(prefRole&&ra===prefRole)?0:1, pb=(prefRole&&rb===prefRole)?0:1;
+    if(pa!==pb)return pa-pb;
+    const ka=ra||'￿', kb=rb||'￿';
+    return ka.localeCompare(kb)||a.localeCompare(b);
+  });
+}
+function poolEnsure(name,role){
+  name=String(name||'').trim(); if(!name)return null;
+  WS.pool=WS.pool||[];
+  let q=poolGet(name);
+  if(!q){q=normPerson({name:name,role:role||''},WS.pool.length);WS.pool.push(q);}
+  else if(!q.role&&role)q.role=role;
+  return q;
+}
+let poolQ='',poolRfV='';
+function renderPool(){
+  const qi=document.getElementById('poolQ'); if(document.activeElement!==qi)qi.value=poolQ;
+  const rf=document.getElementById('poolRf'), roles=allPartRoles().sort();
+  rf.innerHTML='<option value="">전체 역할</option>'+roles.map(r=>'<option value="'+esc(r)+'"'+(r===poolRfV?' selected':'')+'>'+esc(r)+'</option>').join('')+
+    '<option value="__none"'+(poolRfV==='__none'?' selected':'')+'>역할 미지정</option>';
+  const kw=poolQ.trim().toLowerCase();
+  const list=(WS.pool||[]).filter(q=>{
+    if(poolRfV==='__none'){ if(q.role)return false; } else if(poolRfV&&q.role!==poolRfV)return false;
+    if(!kw)return true;
+    return (q.name+' '+q.role+' '+q.org+' '+q.grade+' '+q.email).toLowerCase().indexOf(kw)>=0;
+  }).sort((a,b)=>(a.role||'￿').localeCompare(b.role||'￿')||a.name.localeCompare(b.name));
+  const projCnt=n=>WS.projects.filter(p=>(p.people||[]).indexOf(n)>=0).length;
+  const taskCnt=n=>WS.projects.reduce((s2,p)=>s2+p.tasks.filter(t=>(t.assignees||[]).indexOf(n)>=0).length,0);
+  document.getElementById('poolCnt').textContent=list.length+' / '+(WS.pool||[]).length+' 명';
+  document.getElementById('poolBody').innerHTML=list.length?
+    '<table class="ptable"><thead><tr><th>이름</th><th>역할(파트)</th><th>소속 · 직급</th><th>이메일</th><th>투입률</th><th>참여 프로젝트</th><th>배정 작업</th><th></th></tr></thead><tbody>'+
+    list.map(q=>'<tr>'+
+      '<td class="nm">'+esc(q.name)+(WS.me&&WS.me===q.name?' <span style="color:#2f8f4a;font-size:10.5px;font-weight:700">나</span>':'')+'</td>'+
+      '<td>'+(q.role?'<span class="prole">'+esc(q.role)+'</span>':'<span class="prole none">미지정</span>')+'</td>'+
+      '<td>'+esc([q.org,q.grade].filter(Boolean).join(' · ')||'—')+'</td>'+
+      '<td class="mono">'+esc(q.email||'—')+'</td>'+
+      '<td class="mono">'+q.alloc+'%</td>'+
+      '<td class="mono">'+projCnt(q.name)+'</td>'+
+      '<td class="mono">'+taskCnt(q.name)+'</td>'+
+      '<td><div class="pact"><button type="button" data-pedit="'+q.id+'">수정</button><button type="button" class="del" data-prm="'+q.id+'">삭제</button></div></td>'+
+    '</tr>').join('')+'</tbody></table>'
+    :'<div class="pool-empty">'+((WS.pool||[]).length?'조건에 맞는 인력이 없습니다':'등록된 인력이 없습니다 — <b>+ 인력 추가</b> 또는 <b>가져오기</b>로 시작하세요')+'</div>';
+  document.querySelectorAll('[data-pedit]').forEach(el=>el.onclick=()=>openPerson(el.getAttribute('data-pedit')));
+  document.querySelectorAll('[data-prm]').forEach(el=>el.onclick=()=>{
+    const q=(WS.pool||[]).find(x=>x.id===el.getAttribute('data-prm')); if(!q)return;
+    const used=taskCnt(q.name);
+    if(used){toast('"'+q.name+'" 은(는) 작업 '+used+'개에 배정되어 삭제할 수 없습니다');return;}
+    WS.pool=WS.pool.filter(x=>x.id!==q.id);
+    WS.projects.forEach(p=>{p.people=(p.people||[]).filter(x=>x!==q.name);});
+    persist();renderPool();toast('삭제됨 — '+q.name);
+  });
+}
+document.getElementById('poolQ').addEventListener('input',e=>{poolQ=e.target.value;renderPool();});
+document.getElementById('poolRf').addEventListener('change',e=>{poolRfV=e.target.value;renderPool();});
+document.getElementById('poolAddBtn').onclick=()=>openPerson(null);
+document.getElementById('poolImpBtn').onclick=openImport;
+
+// ---- 인력 추가·수정 ----
+let personEditId=null, personAfter=null;
+function openPerson(id,after,preName){
+  personEditId=id||null; personAfter=after||null;
+  const q=id?(WS.pool||[]).find(x=>x.id===id):null;
+  document.getElementById('personTitle').textContent=q?'인력 수정':'인력 추가';
+  document.getElementById('poolRoles').innerHTML=allPartRoles().sort().map(r=>'<option value="'+esc(r)+'">').join('');
+  document.getElementById('qName').value=q?q.name:(preName||'');
+  document.getElementById('qRole').value=q?q.role:'';
+  document.getElementById('qOrg').value=q?q.org:'';
+  document.getElementById('qGrade').value=q?q.grade:'';
+  document.getElementById('qEmail').value=q?q.email:'';
+  document.getElementById('qAlloc').value=q?q.alloc:100;
+  document.getElementById('errQName').textContent='';
+  document.getElementById('errQRole').textContent='';
+  document.getElementById('personOverlay').classList.add('on');
+  setTimeout(()=>document.getElementById('qName').focus(),40);
+}
+document.getElementById('personSave').onclick=()=>{
+  const name=document.getElementById('qName').value.trim();
+  const role=document.getElementById('qRole').value.trim();
+  document.getElementById('errQName').textContent=name?'':'이름을 입력하세요';
+  document.getElementById('errQRole').textContent=role?'':'역할(파트)을 입력하세요';
+  if(!name||!role)return;
+  if((WS.pool||[]).some(x=>x.name===name&&x.id!==personEditId)){
+    document.getElementById('errQName').textContent='이미 등록된 이름입니다';return;}
+  const data={name:name,role:role,
+    org:document.getElementById('qOrg').value.trim(),
+    grade:document.getElementById('qGrade').value.trim(),
+    email:document.getElementById('qEmail').value.trim(),
+    alloc:document.getElementById('qAlloc').value};
+  WS.pool=WS.pool||[];
+  if(personEditId){
+    const q=WS.pool.find(x=>x.id===personEditId); if(!q)return;
+    const old=q.name; Object.assign(q,normPerson(Object.assign({id:q.id},data)));
+    if(old!==name)renamePerson(old,name);
+  }else WS.pool.push(normPerson(data,WS.pool.length));
+  persist();
+  document.getElementById('personOverlay').classList.remove('on');
+  const cb=personAfter; personEditId=null; personAfter=null;
+  if(cb)cb(name);
+  if(VIEW==='pool')renderPool(); else render();
+  toast('저장됨 — '+name);
+};
+function renamePerson(oldN,newN){
+  if(WS.me===oldN)WS.me=newN;
+  WS.projects.forEach(p=>{
+    p.people=(p.people||[]).map(x=>x===oldN?newN:x);
+    p.tasks.forEach(t=>{t.assignees=(t.assignees||[]).map(x=>x===oldN?newN:x);});
+  });
+}
+
+// ---- 가져오기(붙여넣기 / CSV) ----
+const IMP_ALIAS={
+  name:['이름','성명','성함','담당자','name','fullname'],
+  role:['역할','파트','직무','직군','포지션','role','part','position'],
+  org:['소속','회사','조직','팀','부서','org','company','team'],
+  grade:['직급','직책','레벨','grade','title','level'],
+  email:['이메일','메일','email','e-mail','mail'],
+  alloc:['투입률','투입율','투입','가동률','alloc','allocation','fte']
+};
+function splitDelim(line,d){
+  const out=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){const c=line[i];
+    if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if(c==='"')q=true;
+    else if(c===d){out.push(cur);cur='';}
+    else cur+=c;
+  }
+  out.push(cur);
+  return out.map(x=>x.trim().replace(/^"|"$/g,''));
+}
+function parsePeopleText(txt){
+  txt=String(txt||'').replace(/^﻿/,'').replace(/\r\n?/g,'\n');
+  const lines=txt.split('\n').filter(l=>l.trim());
+  if(!lines.length)return [];
+  const h0=lines[0];
+  const d=h0.indexOf('\t')>=0?'\t':((h0.indexOf(';')>=0&&h0.indexOf(',')<0)?';':',');
+  let rows=lines.map(l=>splitDelim(l,d));
+  const nk=x=>String(x||'').toLowerCase().replace(/[\s()%·.\-_/]/g,'');
+  const head=rows[0].map(nk);
+  const map={};let hasHead=false;
+  Object.keys(IMP_ALIAS).forEach(k=>{
+    const i=head.findIndex(c=>c&&IMP_ALIAS[k].some(a=>nk(a)===c));
+    if(i>=0){map[k]=i;hasHead=true;}
+  });
+  if(hasHead)rows=rows.slice(1);
+  else{map.name=0;map.role=1;map.org=2;map.grade=3;map.email=4;map.alloc=5;}
+  const g=(r,k)=>(map[k]==null?'':String(r[map[k]]||'').trim());
+  const out=[];
+  rows.forEach(r=>{
+    const nm=g(r,'name'); if(!nm)return;
+    const av=g(r,'alloc').replace(/[^0-9.]/g,'');
+    let al=av===''?100:parseFloat(av);
+    if(isNaN(al))al=100;
+    if(al>0&&al<=1&&av.indexOf('.')>=0)al=al*100;   // 0.8 → 80%
+    out.push({name:nm,role:g(r,'role'),org:g(r,'org'),grade:g(r,'grade'),email:g(r,'email'),
+      alloc:Math.max(0,Math.min(100,Math.round(al)))});
+  });
+  return out;
+}
+let impRows=[];
+function impMatch(r){
+  if(r.email){const m=(WS.pool||[]).find(q=>q.email&&q.email.toLowerCase()===r.email.toLowerCase());if(m)return m;}
+  return (WS.pool||[]).find(q=>q.name===r.name)||null;
+}
+function renderImpPreview(){
+  const box=document.getElementById('impResult'), sum=document.getElementById('impSum');
+  if(!impRows.length){box.innerHTML='';sum.innerHTML='붙여넣거나 파일을 선택하면 미리보기가 표시됩니다';return;}
+  let nN=0,nU=0;
+  const body=impRows.map(r=>{const m=impMatch(r); if(m)nU++; else nN++;
+    return '<tr><td>'+(m?'<span class="tagU">갱신</span>':'<span class="tagN">신규</span>')+'</td>'+
+      '<td><b>'+esc(r.name)+'</b></td><td>'+esc(r.role||'—')+'</td>'+
+      '<td>'+esc([r.org,r.grade].filter(Boolean).join(' · ')||'—')+'</td>'+
+      '<td>'+esc(r.email||'—')+'</td><td>'+r.alloc+'%</td></tr>';}).join('');
+  box.innerHTML='<div class="imp-prev"><table><thead><tr><th></th><th>이름</th><th>역할</th><th>소속 · 직급</th><th>이메일</th><th>투입률</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  sum.innerHTML='총 <b>'+impRows.length+'</b>건 — 신규 <b style="color:#1a7f37">'+nN+'</b> · 갱신 <b style="color:#1a56db">'+nU+'</b>';
+}
+function openImport(){
+  impRows=[];
+  document.getElementById('impPaste').value='';
+  document.getElementById('impFileName').textContent='';
+  try{document.getElementById('impFile').value='';}catch(_){}
+  document.querySelectorAll('[data-imp]').forEach(b=>b.classList.toggle('on',b.getAttribute('data-imp')==='paste'));
+  document.getElementById('impPastePane').classList.add('on');
+  document.getElementById('impFilePane').classList.remove('on');
+  renderImpPreview();
+  document.getElementById('impOverlay').classList.add('on');
+  setTimeout(()=>document.getElementById('impPaste').focus(),40);
+}
+document.querySelectorAll('[data-imp]').forEach(b=>b.onclick=()=>{
+  const k=b.getAttribute('data-imp');
+  document.querySelectorAll('[data-imp]').forEach(x=>x.classList.toggle('on',x===b));
+  document.getElementById('impPastePane').classList.toggle('on',k==='paste');
+  document.getElementById('impFilePane').classList.toggle('on',k==='file');
+});
+document.getElementById('impPaste').addEventListener('input',e=>{impRows=parsePeopleText(e.target.value);renderImpPreview();});
+document.getElementById('impFile').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  document.getElementById('impFileName').textContent=f.name+' · '+Math.max(1,Math.round(f.size/1024))+'KB';
+  const rd=new FileReader();
+  rd.onload=()=>{impRows=parsePeopleText(String(rd.result||''));renderImpPreview();};
+  rd.readAsText(f,'utf-8');
+});
+document.getElementById('impApply').onclick=()=>{
+  if(!impRows.length){toast('가져올 데이터가 없습니다');return;}
+  let nN=0,nU=0;
+  WS.pool=WS.pool||[];
+  impRows.forEach(r=>{
+    const m=impMatch(r);
+    if(m){
+      const old=m.name;
+      if(r.name)m.name=r.name;
+      if(r.role)m.role=r.role;
+      if(r.org)m.org=r.org;
+      if(r.grade)m.grade=r.grade;
+      if(r.email)m.email=r.email;
+      m.alloc=r.alloc;
+      if(old!==m.name)renamePerson(old,m.name);
+      nU++;
+    }else{WS.pool.push(normPerson(r,WS.pool.length));nN++;}
+  });
+  persist();
+  document.getElementById('impOverlay').classList.remove('on');
+  VIEW='pool';render();
+  toast('가져오기 완료 — 신규 '+nN+'명 · 갱신 '+nU+'명');
+};
+// 인력풀 모달은 자기 자신만 닫기 (설정 모달 위에서 열릴 수 있음)
+document.querySelectorAll('#personOverlay [data-close],#impOverlay [data-close]').forEach(el=>el.onclick=e=>{
+  const o=e.target.closest('.overlay'); if(o)o.classList.remove('on');
+});
+['personOverlay','impOverlay'].forEach(id=>{
+  const o=document.getElementById(id);
+  o.onclick=e=>{if(e.target===o)o.classList.remove('on');};
+});
+// 담당(파트) 변경 시 담당자 후보 순서 갱신
+document.getElementById('fRole').addEventListener('change',()=>renderFAsg(fAsgChecked()));
 
 // ---------- 칸반 포인터 드래그 (네이티브 DnD 대체 — 어디서든 안정 동작) ----------
 function kanbanPointerDown(e){
