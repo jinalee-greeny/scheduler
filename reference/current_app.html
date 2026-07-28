@@ -259,7 +259,7 @@ table{width:100%;border-collapse:collapse}
 .phrow input[type=color]{width:38px;height:32px;padding:2px;border-radius:8px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1c2126;color:#fff;padding:9px 16px;border-radius:8px;font-size:14px;z-index:80;opacity:0;transition:.2s;pointer-events:none}
 .toast.on{opacity:1}
-@media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.mm-grid{grid-template-columns:1fr}.gantt-col{display:none}.appnav{display:none}}
+@media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.mm-grid{grid-template-columns:1fr}.gantt-col{display:none}.appbar{flex-wrap:wrap;gap:10px}.appnav{order:3;width:100%}.apputil{order:2}}
 /* ===== app shell header ===== */
 .appbar{display:flex;align-items:center;gap:18px;background:#ffffff;border:1px solid var(--line);border-radius:14px;padding:11px 16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(20,25,32,.04)}
 .brand{display:flex;align-items:center;gap:9px}
@@ -470,10 +470,6 @@ body{color:var(--ink);background:
 #homeView{display:none}
 body.view-home #homeView{display:block}
 body.view-home .kpis,body.view-home .ctrlbar,body.view-home .edittoolbar,body.view-home .panel,body.view-home .appctl{display:none!important}
-.appnav a{display:inline-flex;align-items:center;gap:7px;max-width:300px}
-.appnav .projtab .ptname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.appnav .projtab .cv{font-style:normal;font-size:10px;color:#9aa2ab;padding:1px 3px;border-radius:4px;flex:none}
-.appnav .projtab .cv:hover{color:var(--ink);background:rgba(120,128,140,.2)}
 .projmenu{position:absolute;z-index:60;min-width:260px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(20,25,32,.17);padding:6px}
 .projmenu .pm-hd{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9aa2ab;padding:6px 10px 4px}
 .projmenu .pm-i{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:13.5px;cursor:pointer}
@@ -647,8 +643,86 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 .imp-prev .tagU{color:#1a56db;font-weight:700;font-size:11px}
 .imp-note{font-size:12px;color:#8a919b;line-height:1.7;margin-top:10px}
 .imp-note b{color:#5b6470}
+
+/* ===== 시스템 아이콘 (Lucide) ===== */
+.icn{width:16px;height:16px;flex:none;display:inline-block;vertical-align:-3px;
+  fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.icn.s12{width:12px;height:12px;stroke-width:2.4;vertical-align:-1px}
+.icn.s13{width:13px;height:13px;stroke-width:2.3;vertical-align:-2px}
+.icn.s14{width:14px;height:14px;stroke-width:2.2;vertical-align:-2px}
+.icn.s18{width:18px;height:18px;stroke-width:1.9;vertical-align:-4px}
+.icn.s20{width:20px;height:20px;stroke-width:1.8;vertical-align:-5px}
+
+/* ===== GNB 좌측: 내 프로젝트 + 프로젝트 셀렉트 ===== */
+.appnav{align-items:center;gap:6px}
+.appnav a{display:inline-flex;align-items:center;gap:7px}
+.projsel{display:inline-flex;align-items:center;gap:8px;max-width:290px;height:34px;
+  padding:0 9px 0 11px;border:1px solid var(--line);background:#fff;border-radius:9px;
+  font-family:inherit;font-size:14px;color:var(--ink);cursor:pointer;transition:.12s}
+.projsel:hover{border-color:#c3cad3;background:#fbfcfd}
+.projsel.on{border-color:#b9c2cc;background:#f4f6f8;font-weight:650;box-shadow:inset 0 0 0 1px rgba(120,128,140,.1)}
+.projsel .pdot{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.projsel .ptname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1}
+.projsel .cvi{color:#8b939d;margin-left:2px}
+.projsel:hover .cvi{color:var(--ink)}
+
+/* ===== GNB 우측: 유틸(인력풀 · 메뉴) ===== */
+.apputil{margin-left:auto;display:flex;align-items:center;gap:4px;padding-left:14px;
+  border-left:1px solid var(--line)}
+body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
+.ubtn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border:1px solid transparent;
+  background:transparent;border-radius:9px;font-family:inherit;font-size:14px;color:#6b7280;cursor:pointer;transition:.12s}
+.ubtn:hover{background:#f2f4f7;color:var(--ink)}
+.ubtn.on{background:#f2f4f7;color:var(--ink);font-weight:650}
+.ubtn.sq{width:34px;padding:0;justify-content:center}
+@media(max-width:1080px){.ubtn .ulab{display:none}.ubtn{width:34px;padding:0;justify-content:center}}
+/* glass overrides (must follow base) */
+.projsel{background:var(--glass-2);border:1px solid var(--gbrd)}
+.projsel:hover{background:rgba(255,255,255,.75)}
+.projsel.on{background:rgba(120,128,140,.16);border-color:var(--gbrd)}
+.apputil{border-left:1px solid var(--gdiv)}
+.ubtn:hover,.ubtn.on{background:rgba(120,128,140,.16)}
+
+/* ===== 드롭다운 메뉴 (프로젝트 전환 · 유틸 공용) ===== */
+.projmenu .pm-i .mi{color:#7b838d;flex:none}
+.projmenu .pm-i:hover .mi{color:var(--ink)}
+.projmenu .pm-i.danger{color:#c0392b}
+.projmenu .pm-i.danger .mi{color:#c0392b}
+.projmenu .pm-i.danger:hover{background:#fdeaea}
+.projmenu.utilmenu{min-width:206px}
+
+/* ===== 아이콘형 액션 버튼 (표 행 등) ===== */
+.pact button{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0}
+.psearch{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b939d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:left 12px center;background-size:15px;padding-left:36px}
+.modal .x .icn{width:17px;height:17px;stroke-width:2.1;vertical-align:0}
+.hchip .del .icn,.pc-x .icn{width:13px;height:13px;stroke-width:2.4;vertical-align:0}
+.foldtog .icn{width:13px;height:13px;stroke-width:2.4;vertical-align:0}
+.simverdict .ic .icn{width:15px;height:15px;stroke-width:2.6;vertical-align:0}
+.btn .icn,.ubtn .icn{margin-right:0}
 </style></head>
 <body><div class="wrap">
+<!-- 시스템 아이콘 세트: Lucide (ISC License, (c) Lucide Contributors) — 외부 의존 없이 인라인 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-bang" viewBox="0 0 24 24"><path d="M12 5v9"/><path d="M12 18.5h.01"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+<symbol id="i-dashv" viewBox="0 0 24 24"><path d="M12 3v4"/><path d="M12 10v4"/><path d="M12 17v4"/></symbol>
+</defs></svg>
 <header class="appbar">
   <div class="brand"><span class="brand-name">Greencast</span></div>
   <nav class="appnav" id="appnav"></nav>
@@ -656,6 +730,10 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
     <select class="rolefilter" id="roleFilter"><option value="">전체 담당</option></select>
     <div class="wtoggle"><span class="lab">주말 근무 <b id="wstate">OFF</b></span><div class="sw" id="wsw"></div></div>
     <button class="btn" id="editBtn">편집 모드</button>
+  </div>
+  <div class="apputil">
+    <button class="ubtn" id="navPoolBtn" title="인력풀"><svg class="icn"><use href="#i-users"></use></svg><span class="ulab">인력풀</span></button>
+    <button class="ubtn sq" id="navMenuBtn" title="메뉴 · 설정"><svg class="icn"><use href="#i-menu"></use></svg></button>
   </div>
 </header>
 <div class="kpis" id="kpis"></div>
@@ -668,7 +746,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
       <div class="home-sub">담당자 <input class="meinp" id="meInp" list="peopleAll" placeholder="내 이름"><datalist id="peopleAll"></datalist>
         <span>이름과 프로젝트별 역할 기준으로 <b>내 작업</b>을 모아 봅니다</span></div>
     </div>
-    <button class="btn primary" id="newProjBtn">+ 새 프로젝트</button>
+    <button class="btn primary" id="newProjBtn"><svg class="icn s14"><use href="#i-plus"></use></svg> 새 프로젝트</button>
   </div>
   <div class="hsum" id="hsum"></div>
   <div class="sec-hd"><h2>프로젝트</h2><em>클릭하면 해당 프로젝트로 이동</em></div>
@@ -688,8 +766,8 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
       <div class="pool-sub">워크스페이스 공통 인력 마스터입니다. 여기 등록된 인력 중에서 프로젝트별 참여자를 선택합니다.</div>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn" id="poolImpBtn">가져오기</button>
-      <button class="btn primary" id="poolAddBtn">+ 인력 추가</button>
+      <button class="btn" id="poolImpBtn"><svg class="icn s14"><use href="#i-upload"></use></svg> 가져오기</button>
+      <button class="btn primary" id="poolAddBtn"><svg class="icn s14"><use href="#i-plus"></use></svg> 인력 추가</button>
     </div>
   </div>
   <div class="pool-bar">
@@ -712,12 +790,13 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 
 <div class="edittoolbar" id="editToolbar">
   <span class="tt">관리자 편집</span>
-  <button class="btn small primary" id="addTaskBtn">태스크 추가</button>
-  <button class="btn small" id="settingsBtn">설정</button>
-  <button class="btn small" id="undoBtn">되돌리기</button>
-  <button class="btn small" id="exportBtn">내보내기(JSON)</button>
-  <button class="btn small" id="importBtn">가져오기</button>
-  <button class="btn small" id="resetBtn">초기화</button>
+  <button class="btn small primary" id="addTaskBtn"><svg class="icn s14"><use href="#i-plus"></use></svg> 태스크 추가</button>
+  <button class="btn small" id="undoBtn"><svg class="icn s14"><use href="#i-undo"></use></svg> 되돌리기</button>
+  <span class="tt" style="margin-left:2px;color:#8a919b;font-weight:500">설정·내보내기·초기화는 상단 <b style="color:#556">메뉴</b>에서</span>
+  <button class="btn small" id="settingsBtn" style="display:none">설정</button>
+  <button class="btn small" id="exportBtn" style="display:none">내보내기(JSON)</button>
+  <button class="btn small" id="importBtn" style="display:none">가져오기</button>
+  <button class="btn small" id="resetBtn" style="display:none">초기화</button>
   <input type="file" id="importFile" accept="application/json" style="display:none">
 </div>
 
@@ -740,7 +819,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 <div class="card">
 <div class="gscroll" id="gscroll">
 <table class="gtbl">
-<thead><tr><th>WBS</th><th>태스크<button class="foldtog" id="foldBtn" title="담당·MD·기간·상태 접기">‹</button></th><th>담당</th><th>MD</th><th>기간(역산)</th><th>상태</th>
+<thead><tr><th>WBS</th><th>태스크<button class="foldtog" id="foldBtn" title="담당·MD·기간·상태 접기"><svg class="icn"><use href="#i-chevron-left"></use></svg></button></th><th>담당</th><th>MD</th><th>기간(역산)</th><th>상태</th>
 <th class="gantt-col"><div class="gantt-head" id="ghead"></div></th></tr></thead>
 <tbody id="gbody"></tbody>
 </table>
@@ -788,7 +867,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 
 <!-- 태스크 모달 -->
 <div class="overlay" id="taskOverlay"><div class="modal">
-  <h2><span id="taskTitle">태스크 추가</span><span class="x" data-close>×</span></h2>
+  <h2><span id="taskTitle">태스크 추가</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
   <div class="mbody">
     <div class="row2">
       <div class="field"><label>WBS ID</label><input id="fId" placeholder="예: 3.5"><div class="err" id="errId"></div></div>
@@ -802,7 +881,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
     </div>
     <div class="field"><label>상태</label><select id="fStatus"></select></div>
     <div class="field"><label>담당자</label><div class="depbox" id="fAsg"></div>
-      <div class="hrow" style="margin-top:6px"><input id="fNewPerson" placeholder="새 담당자 이름" style="flex:1"><button class="btn small" type="button" id="fPersonAdd">+ 인력 추가</button></div>
+      <div class="hrow" style="margin-top:6px"><input id="fNewPerson" placeholder="새 담당자 이름" style="flex:1"><button class="btn small" type="button" id="fPersonAdd"><svg class="icn s14"><use href="#i-plus"></use></svg> 인력 추가</button></div>
     </div>
     <div class="field"><label>선행 태스크 (의존)</label><div class="depbox" id="fDeps"></div><div class="err" id="errDeps"></div></div>
   </div>
@@ -814,7 +893,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 
 <!-- 설정 모달 -->
 <div class="overlay" id="setOverlay"><div class="modal wide">
-  <h2><span>프로젝트 설정</span><span class="x" data-close>×</span></h2>
+  <h2><span>프로젝트 설정</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
   <div class="mbody">
     <div class="sect">프로젝트</div>
     <div class="row2">
@@ -830,7 +909,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
     <div class="hrow"><input id="rName" placeholder="파트·역할명 (예: UX, FE, 디자인)"><button class="btn small" id="rAdd">추가</button></div>
     <div class="chiprow" id="rChips"></div>
     <div class="sect">참여 인력 <span style="font-weight:400;color:#9aa2ab;font-size:12px">— 인력풀에서 선택</span></div>
-    <div class="hrow"><input id="pName" placeholder="인력풀 검색 (이름·역할·소속)"><button class="btn small" id="pAdd">+ 새 인력</button></div>
+    <div class="hrow"><input id="pName" placeholder="인력풀 검색 (이름·역할·소속)"><button class="btn small" id="pAdd"><svg class="icn s14"><use href="#i-plus"></use></svg> 새 인력</button></div>
     <div class="pickbox" id="pPick"></div>
     <div class="chiprow" id="pChips"></div>
     <div class="sect">공휴일</div>
@@ -846,7 +925,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 
 <!-- 새 프로젝트 모달 -->
 <div class="overlay" id="npOverlay"><div class="modal">
-  <h2><span>새 프로젝트</span><span class="x" data-close>×</span></h2>
+  <h2><span>새 프로젝트</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
   <div class="mbody">
     <div class="field"><label>프로젝트명</label><input id="npName" placeholder="예: 통합 포털 리뉴얼"><div class="err" id="errNpName"></div></div>
     <div class="row3">
@@ -869,7 +948,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 
 <!-- ===== 인력 추가·수정 ===== -->
 <div class="overlay" id="personOverlay"><div class="modal">
-  <h2><span id="personTitle">인력 추가</span><span class="x" data-close>×</span></h2>
+  <h2><span id="personTitle">인력 추가</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
   <div class="mbody">
     <div class="row2">
       <div class="field"><label>이름 *</label><input id="qName" placeholder="예: 홍길동"><div class="err" id="errQName"></div></div>
@@ -891,7 +970,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 
 <!-- ===== 인력풀 가져오기 ===== -->
 <div class="overlay" id="impOverlay"><div class="modal wide">
-  <h2><span>인력풀 가져오기</span><span class="x" data-close>×</span></h2>
+  <h2><span>인력풀 가져오기</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
   <div class="mbody">
     <div class="imp-tabs"><button type="button" data-imp="paste" class="on">붙여넣기</button><button type="button" data-imp="file">CSV 파일</button></div>
     <div class="imp-pane on" id="impPastePane">
@@ -1083,8 +1162,8 @@ function simWhatIf(){
   const baseOpen=C.target, newOpen=ok?baseOpen:cpAddWd(baseOpen,slip);
   const baseEf=C.tef[id], newEf=baseEf?cpAddWd(baseEf,d):null;
   const verdict=ok
-    ? '<div class="simverdict ok"><span class="ic">✓</span>목표 오픈일 유지</div>'
-    : '<div class="simverdict bad"><span class="ic">!</span>목표 오픈일 '+slip+'일 지연</div>';
+    ? '<div class="simverdict ok"><span class="ic">'+icn('check')+'</span>목표 오픈일 유지</div>'
+    : '<div class="simverdict bad"><span class="ic">'+icn('bang')+'</span>목표 오픈일 '+slip+'일 지연</div>';
   const arrow=(from,to,changed,dlt,toCls)=>changed
     ? '<span class="fv"><s class="from">'+from+'</s><span class="ar">→</span><b class="to '+(toCls||'')+'">'+to+'</b>'+(dlt||'')+'</span>'
     : '<span class="fv"><b>'+from+'</b> <span class="keep">그대로</span></span>';
@@ -1421,7 +1500,7 @@ document.querySelectorAll('#zoomseg button').forEach(b=>b.onclick=function(){
   render();});
 // left-column fold: auto on horizontal scroll, manual override via button, auto-expand at scrollLeft 0
 const gscroll=document.getElementById('gscroll'),foldBtn=document.getElementById('foldBtn');
-function syncFoldBtn(){const f=gscroll.classList.contains('gfold');foldBtn.textContent=f?'›':'‹';foldBtn.title=f?'담당·MD·기간·상태 펼치기':'담당·MD·기간·상태 접기';}
+function syncFoldBtn(){const f=gscroll.classList.contains('gfold');foldBtn.innerHTML=icn(f?'chevron-right':'chevron-left');foldBtn.title=f?'담당·MD·기간·상태 펼치기':'담당·MD·기간·상태 접기';}
 gscroll.addEventListener('scroll',()=>{gscroll.classList.toggle('gfold',gscroll.scrollLeft>4);syncFoldBtn();});
 foldBtn.onclick=()=>{gscroll.classList.toggle('gfold');syncFoldBtn();};
 document.getElementById('editBtn').onclick=function(){editMode=!editMode;
@@ -1448,35 +1527,72 @@ function goHome(){VIEW='home';render();window.scrollTo(0,0);}
 function goPool(){VIEW='pool';render();window.scrollTo(0,0);}
 
 // ---- GNB: 홈 탭 + 현재 프로젝트 탭(+전환 메뉴) ----
+// 시스템 아이콘 헬퍼 — 스프라이트(<symbol id="i-*">) 참조
+function icn(n,cls){return '<svg class="icn'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#i-'+n+'"></use></svg>';}
+
 function renderNav(){
   const p=curProj();
   document.getElementById('appnav').innerHTML=
-    '<a data-nav="home"'+(VIEW==='home'?' class="on"':'')+'>내 프로젝트</a>'+
-    '<a data-nav="pool"'+(VIEW==='pool'?' class="on"':'')+'>인력풀</a>'+
-    '<a data-nav="proj" class="projtab'+(VIEW==='project'?' on':'')+'" title="'+esc(p.settings.project)+'">'+
-      '<span class="ptname">'+esc(p.settings.project)+'</span><i class="cv" data-pmenu title="프로젝트 전환">▾</i></a>';
+    '<a data-nav="home"'+(VIEW==='home'?' class="on"':'')+'>'+icn('grid','s14')+'내 프로젝트</a>'+
+    '<button class="projsel'+(VIEW==='project'?' on':'')+'" data-pmenu type="button" title="'+esc(p.settings.project)+' — 클릭해 프로젝트 전환">'+
+      '<span class="pdot" style="background:'+esc(p.settings.color||'#4ecb6a')+'"></span>'+
+      '<span class="ptname">'+esc(p.settings.project)+'</span>'+
+      icn('chevron-down','s14 cvi')+
+    '</button>';
   document.querySelector('[data-nav="home"]').onclick=goHome;
-  document.querySelector('[data-nav="pool"]').onclick=goPool;
-  document.querySelector('[data-nav="proj"]').onclick=e=>{
-    if(e.target.closest('[data-pmenu]')){e.stopPropagation();openProjMenu(e.currentTarget);return;}
-    VIEW='project';render();
-  };
+  document.querySelector('.projsel').onclick=function(e){e.stopPropagation();openProjMenu(this);};
+  const pb=document.getElementById('navPoolBtn');
+  pb.classList.toggle('on',VIEW==='pool'); pb.onclick=()=>{closeUtilMenu();goPool();};
+  document.getElementById('navMenuBtn').onclick=function(e){e.stopPropagation();openUtilMenu(this);};
 }
-function closeProjMenu(){document.querySelectorAll('.projmenu').forEach(m=>m.remove());}
+
+// ---- GNB 우측 유틸 메뉴 (설정 · 데이터) ----
+function closeUtilMenu(){document.querySelectorAll('.utilmenu').forEach(m=>m.remove());}
+function openUtilMenu(anchor){
+  if(document.querySelector('.utilmenu')){closeUtilMenu();return;}
+  closeProjMenu();
+  const m=document.createElement('div');m.className='projmenu utilmenu';
+  m.innerHTML='<div class="pm-hd">현재 프로젝트</div>'+
+    '<div class="pm-i" data-u="set">'+icn('settings','s14 mi')+'<span>프로젝트 설정</span></div>'+
+    '<div class="pm-i" data-u="pool">'+icn('users','s14 mi')+'<span>인력풀 관리</span></div>'+
+    '<div class="pm-d"></div><div class="pm-hd">데이터</div>'+
+    '<div class="pm-i" data-u="exp">'+icn('download','s14 mi')+'<span>내보내기 (JSON)</span></div>'+
+    '<div class="pm-i" data-u="imp">'+icn('upload','s14 mi')+'<span>가져오기 (JSON)</span></div>'+
+    '<div class="pm-d"></div>'+
+    '<div class="pm-i danger" data-u="rst">'+icn('reset','s14 mi')+'<span>초기 데이터로 되돌리기</span></div>';
+  document.body.appendChild(m);
+  const r=anchor.getBoundingClientRect();
+  m.style.top=Math.round(r.bottom+window.scrollY+6)+'px';
+  m.style.left=Math.round(Math.max(10,r.right+window.scrollX-m.offsetWidth))+'px';
+  const act={set:'settingsBtn',exp:'exportBtn',imp:'importBtn',rst:'resetBtn'};
+  m.querySelectorAll('[data-u]').forEach(el=>el.onclick=()=>{
+    const k=el.getAttribute('data-u'); closeUtilMenu();
+    if(k==='pool'){goPool();return;}
+    if(k==='set'&&VIEW!=='project'){VIEW='project';render();}
+    document.getElementById(act[k]).click();
+  });
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('.utilmenu')||e.target.closest('#navMenuBtn'))return;
+  closeUtilMenu();
+});
+function closeProjMenu(){document.querySelectorAll('.projmenu:not(.utilmenu)').forEach(m=>m.remove());}
 function openProjMenu(anchor){
+  closeUtilMenu();
   if(document.querySelector('.projmenu')){closeProjMenu();return;}
   const m=document.createElement('div');m.className='projmenu';
   m.innerHTML='<div class="pm-hd">프로젝트 전환</div>'+
     WS.projects.map(p=>'<div class="pm-i'+(p.id===WS.current?' on':'')+'" data-go="'+p.id+'">'+
-      '<span class="ck">'+(p.id===WS.current?'✓':'')+'</span>'+
+      '<span class="ck">'+(p.id===WS.current?icn('check','s12'):'')+'</span>'+
       '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.settings.project)+'</span>'+
       '<span class="rb">'+esc(myRoleOf(p))+'</span></div>').join('')+
-    '<div class="pm-d"></div><div class="pm-i add" data-newproj>+ 새 프로젝트</div>';
+    '<div class="pm-d"></div><div class="pm-i add" data-newproj>'+icn('plus','s14 mi')+'<span>새 프로젝트</span></div>';
   document.body.appendChild(m);
   const r=anchor.getBoundingClientRect();
   m.style.left=Math.round(r.left+window.scrollX)+'px';
   m.style.top=Math.round(r.bottom+window.scrollY+6)+'px';
   m.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>{closeProjMenu();switchProject(el.getAttribute('data-go'));});
+  m.style.maxHeight='min(70vh,520px)';m.style.overflow='auto';
   m.querySelector('[data-newproj]').onclick=()=>{closeProjMenu();openNewProj();};
 }
 document.addEventListener('click',e=>{
@@ -1555,7 +1671,7 @@ function renderHome(){
     const mine=me?p.tasks.filter(t=>(t.assignees||[]).indexOf(me)>=0):[];
     const mineOpen=mine.filter(t=>t.status!=='완료'&&t.status!=='취소').length;
     return '<div class="pcard'+(p.id===WS.current?' cur':'')+'" data-pgo="'+p.id+'">'+
-      '<span class="pc-x" data-pdelete="'+p.id+'" title="프로젝트 삭제">×</span>'+
+      '<span class="pc-x" data-pdelete="'+p.id+'" title="프로젝트 삭제">'+icn('trash')+'</span>'+
       '<div class="pc-hd"><div class="pc-name">'+esc(p.settings.project)+'</div><span class="pc-role '+rc+'">'+esc(r)+'</span></div>'+
       (p.tasks.length
         ? '<div class="pc-open"><b>'+sc.target+'</b> 오픈<span class="pc-dd">D-'+sc.dday+'</span><span class="pc-sl '+slackCls+'">여유 '+sc.minSlack+'일</span></div>'+
@@ -1565,7 +1681,7 @@ function renderHome(){
         : '<div class="pc-open"><b>태스크 없음</b></div><div class="pc-meta" style="margin-top:9px">프로젝트로 이동해 태스크를 추가하세요</div>')+
       (me?'<div class="pc-my">내 작업 <span class="n">'+mineOpen+'건</span>'+(mine.length>mineOpen?'<span style="color:#9aa2ab">· 완료 '+(mine.length-mineOpen)+'</span>':'')+'</div>':'')+
     '</div>';
-  }).join('')+'<div class="pcard add" id="pcardAdd">+ 새 프로젝트</div>';
+  }).join('')+'<div class="pcard add" id="pcardAdd">'+icn('plus','s18')+' 새 프로젝트</div>';
 
   document.querySelectorAll('[data-pgo]').forEach(el=>el.onclick=e=>{
     if(e.target.closest('[data-pdelete]'))return;
@@ -1629,7 +1745,7 @@ function renderHome(){
     '<h3>주간 부하 <em>MD 기준 · 8주</em><span class="seg"><button data-wl="mine" class="'+(wlMode==='mine'?'on':'')+'">내 담당</button><button data-wl="all" class="'+(wlMode==='all'?'on':'')+'">전체</button></span></h3>'+
     (wlMode==='mine'&&!me?'<div class="hempty">담당자 이름을 입력하면 내 주별 부하를 볼 수 있습니다. <b>전체</b>로 전환하면 모든 작업의 부하를 봅니다.</div>':
       rowsW+'<div class="wl-leg">'+WS.projects.map(p=>'<i style="--c:'+p.settings.color+'">'+esc(p.settings.project)+'</i>').join('')+
-      '<i style="--c:transparent;color:#c0392b">┊ 주 '+cap+'MD 한계선'+(wlMode==='mine'&&me&&poolAlloc(me)!==100?' · 투입률 '+poolAlloc(me)+'%':'')+'</i></div>');
+      '<i style="--c:transparent;color:#c0392b">'+icn('dashv','s12')+' 주 '+cap+'MD 한계선'+(wlMode==='mine'&&me&&poolAlloc(me)!==100?' · 투입률 '+poolAlloc(me)+'%':'')+'</i></div>');
   document.querySelectorAll('[data-wl]').forEach(b=>b.onclick=()=>{wlMode=b.getAttribute('data-wl');renderHome();});
 
   // ---- 통합 타임라인 ----
@@ -1658,7 +1774,7 @@ function renderHome(){
       '<h3>통합 타임라인 <em>착수 → ASAP(진한 구간 = 진행률) → 버퍼(빗금) → 오픈</em></h3>'+
       '<div class="ptl-ax">'+ax+'</div><div class="ptl-wrap">'+rowsT+
       '<div class="ptl-now" style="left:calc(128px + (100% - 128px) * '+(nowPct/100).toFixed(4)+')"></div></div>'+
-      '<div class="ptl-nowlab">┊ 오늘 '+shortD2(MODEL.settings.today)+'</div>';
+      '<div class="ptl-nowlab">'+icn('dashv','s12')+' 오늘 '+shortD2(MODEL.settings.today)+'</div>';
   }
 }
 const shortDate=v=>{const p=(v||'').split('-');return (+p[1])+'/'+(+p[2]);};
@@ -1840,7 +1956,7 @@ function openSettings(){
 function renderPchips(){
   const ps=MODEL.people||[];
   document.getElementById('pChips').innerHTML=ps.length?poolSort(ps,'').map(p=>{const pr=poolRole(p);
-    return '<span class="hchip"><b>'+esc(p)+'</b>'+(pr?' <i style="font-style:normal;color:#9aa2ab;font-size:11px">'+esc(pr)+'</i>':'')+' <span class="del" data-pdel="'+esc(p)+'">×</span></span>';}).join(''):'<span style="color:var(--sub);font-size:13px">선택된 참여자가 없습니다 — 위 목록에서 체크하세요</span>';
+    return '<span class="hchip"><b>'+esc(p)+'</b>'+(pr?' <i style="font-style:normal;color:#9aa2ab;font-size:11px">'+esc(pr)+'</i>':'')+' <span class="del" data-pdel="'+esc(p)+'">'+icn('x','s13')+'</span></span>';}).join(''):'<span style="color:var(--sub);font-size:13px">선택된 참여자가 없습니다 — 위 목록에서 체크하세요</span>';
   document.querySelectorAll('[data-pdel]').forEach(el=>el.onclick=()=>{
     const p=el.getAttribute('data-pdel'), used=MODEL.tasks.filter(t=>(t.assignees||[]).indexOf(p)>=0).length;
     if(used){toast('"'+p+'" 은(는) 태스크 '+used+'개에 배정되어 제외할 수 없습니다');return;}
@@ -1875,7 +1991,7 @@ document.getElementById('pAdd').onclick=()=>{
   openPerson(null,nm=>{ if((MODEL.people||[]).indexOf(nm)<0)MODEL.people.push(nm); pickQ='';document.getElementById('pName').value='';renderPPick();renderPchips(); },pre);
 };
 function renderRchips(){
-  document.getElementById('rChips').innerHTML=MODEL.roles.map(r=>'<span class="hchip rtip" data-rtip="'+esc(roleTip(r))+'"><b>'+esc(r)+'</b> <span class="del" data-rdel="'+esc(r)+'">×</span></span>').join('');
+  document.getElementById('rChips').innerHTML=MODEL.roles.map(r=>'<span class="hchip rtip" data-rtip="'+esc(roleTip(r))+'"><b>'+esc(r)+'</b> <span class="del" data-rdel="'+esc(r)+'">'+icn('x','s13')+'</span></span>').join('');
   document.querySelectorAll('[data-rdel]').forEach(el=>el.onclick=()=>{
     const r=el.getAttribute('data-rdel'), used=MODEL.tasks.filter(t=>t.role===r).length;
     if(used){toast('"'+r+'" 은(는) 태스크 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}
@@ -1889,7 +2005,7 @@ document.getElementById('rAdd').onclick=()=>{
   MODEL.roles.push(n);document.getElementById('rName').value="";renderRchips();
 };
 function renderHchips(){
-  document.getElementById('hChips').innerHTML=MODEL.holidays.slice().sort((a,b)=>a.date<b.date?-1:1).map(h=>'<span class="hchip"><b>'+h.date+'</b> '+esc(h.name)+' <span class="del" data-hdel="'+h.date+'">×</span></span>').join('');
+  document.getElementById('hChips').innerHTML=MODEL.holidays.slice().sort((a,b)=>a.date<b.date?-1:1).map(h=>'<span class="hchip"><b>'+h.date+'</b> '+esc(h.name)+' <span class="del" data-hdel="'+h.date+'">'+icn('x','s13')+'</span></span>').join('');
   document.querySelectorAll('[data-hdel]').forEach(el=>el.onclick=()=>{const d=el.getAttribute('data-hdel');MODEL.holidays=MODEL.holidays.filter(h=>h.date!==d);renderHchips();});
 }
 document.getElementById('hAdd').onclick=()=>{const d=document.getElementById('hDate').value,n=document.getElementById('hName').value.trim()||"공휴일";if(!d)return;if(!MODEL.holidays.some(h=>h.date===d))MODEL.holidays.push({date:d,name:n});document.getElementById('hName').value="";renderHchips();};
@@ -1976,7 +2092,7 @@ function renderPool(){
       '<td class="mono">'+q.alloc+'%</td>'+
       '<td class="mono">'+projCnt(q.name)+'</td>'+
       '<td class="mono">'+taskCnt(q.name)+'</td>'+
-      '<td><div class="pact"><button type="button" data-pedit="'+q.id+'">수정</button><button type="button" class="del" data-prm="'+q.id+'">삭제</button></div></td>'+
+      '<td><div class="pact"><button type="button" data-pedit="'+q.id+'" title="수정">'+icn('pencil','s14')+'</button><button type="button" class="del" data-prm="'+q.id+'" title="삭제">'+icn('trash','s14')+'</button></div></td>'+
     '</tr>').join('')+'</tbody></table>'
     :'<div class="pool-empty">'+((WS.pool||[]).length?'조건에 맞는 인력이 없습니다':'등록된 인력이 없습니다 — <b>+ 인력 추가</b> 또는 <b>가져오기</b>로 시작하세요')+'</div>';
   document.querySelectorAll('[data-pedit]').forEach(el=>el.onclick=()=>openPerson(el.getAttribute('data-pedit')));
