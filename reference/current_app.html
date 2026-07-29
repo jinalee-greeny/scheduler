@@ -1175,6 +1175,17 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
         <div class="field"><label>QA 강도</label><select id="gQa"><option>간이</option><option selected>표준</option><option>강화</option></select></div>
         <div class="field"><label>공수 배분 기준</label><div class="gnote">화면 수가 20개에서 멀어질수록 설계·디자인·개발 태스크의 공수 비중이 함께 커지거나 줄어듭니다</div></div>
       </div>
+      <div class="field"><label>화면 수 자동 세기 (선택) <span class="sublbl">기존 사이트 개선 과제에 유용 — sitemap.xml URL 또는 화면 URL 목록</span></label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="gUrlFetch" type="url" placeholder="https://example.com/sitemap.xml" style="flex:1;margin:0">
+          <button class="btn small" type="button" id="gUrlFetchBtn" style="flex:none">가져오기 시도</button>
+        </div>
+        <textarea id="gUrlList" placeholder="가져오기가 막히면(CORS) sitemap.xml 내용이나 화면 URL을 한 줄에 하나씩 여기에 붙여넣으세요" style="min-height:76px"></textarea>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="btn small" type="button" id="gUrlCountBtn"><svg class="icn s14"><use href="#i-sparkles"></use></svg> 붙여넣은 목록에서 화면 수 세기</button>
+          <span class="gnote" style="margin:0">대부분의 사이트는 CORS 때문에 "가져오기 시도"가 막힙니다 — 그럴 땐 sitemap.xml을 새 탭에서 열어 내용을 복사해 붙여넣어 주세요</span>
+        </div>
+      </div>
       <div class="field"><label>포함 범위</label>
         <div class="gchk">
           <label><input type="checkbox" id="gcResearch" checked><span>리서치 · 사용성 검증</span></label>
@@ -2850,6 +2861,48 @@ function gApplyDocText(text,fname){
   toast('"'+fname+'"에서 텍스트를 불러왔습니다'+(filled.length?' — '+filled.join(' · ')+' 반영':''));
 }
 
+// ---- 화면 수 자동 세기: sitemap.xml/URL 목록에서 고유 화면(페이지) 개수 산출 ----
+function gParseUrls(text){
+  const raw=String(text||'');
+  const locM=raw.match(/<loc>\s*([^<\s]+)\s*<\/loc>/gi);
+  const found=(locM&&locM.length) ? locM.map(m=>m.replace(/<\/?loc>/gi,'').trim()) : (raw.match(/https?:\/\/[^\s"'<>()]+/g)||[]);
+  const skipExt=/\.(xml|jpg|jpeg|png|gif|svg|webp|ico|css|js|pdf|woff2?|ttf|eot|mp4|zip)(\?|#|$)/i;
+  const seen={},out=[];
+  found.forEach(u=>{
+    let c=u.replace(/[.,;]+$/,'').split('#')[0].replace(/\/$/,'');
+    if(!c||skipExt.test(c))return;
+    if(seen[c])return; seen[c]=1; out.push(c);
+  });
+  return out;
+}
+function gCountUrls(){
+  const list=gParseUrls(document.getElementById('gUrlList').value);
+  if(!list.length){toast('붙여넣은 내용에서 URL을 찾지 못했습니다');return;}
+  document.getElementById('gScreens').value=list.length;
+  toast('붙여넣은 목록에서 화면 '+list.length+'개를 찾아 반영했습니다');
+}
+async function gFetchUrlList(){
+  const url=(document.getElementById('gUrlFetch').value||'').trim();
+  if(!url){toast('sitemap.xml 등 URL을 입력해 주세요');return;}
+  const btn=document.getElementById('gUrlFetchBtn'),orig=btn.textContent;
+  btn.disabled=true; btn.textContent='가져오는 중…';
+  try{
+    const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),8000);
+    const res=await fetch(url,{signal:ctrl.signal}); clearTimeout(timer);
+    if(!res.ok)throw new Error('http '+res.status);
+    const text=await res.text();
+    document.getElementById('gUrlList').value=text;
+    const list=gParseUrls(text);
+    if(!list.length){toast('가져왔지만 URL을 찾지 못했습니다 — sitemap 형식인지 확인해 주세요');return;}
+    document.getElementById('gScreens').value=list.length;
+    toast('URL에서 화면 '+list.length+'개를 찾아 반영했습니다');
+  }catch(err){
+    toast('이 사이트는 브라우저에서 직접 가져올 수 없습니다(CORS 등) — sitemap 내용을 복사해 아래 칸에 붙여넣어 주세요');
+  }finally{
+    btn.disabled=false; btn.textContent=orig;
+  }
+}
+
 // ---- 근무일 계산 (현재 주말 토글·공휴일 기준) ----
 function gHolSet(){return new Set((MODEL.holidays||[]).map(h=>h.date));}
 function gIsWork(dt,hol){ if(hol.has(iso(dt)))return false;
@@ -3228,6 +3281,8 @@ document.getElementById('gDocFile').onchange=async(e)=>{
   }
   e.target.value='';
 };
+document.getElementById('gUrlFetchBtn').onclick=gFetchUrlList;
+document.getElementById('gUrlCountBtn').onclick=gCountUrls;
 document.getElementById('gPrev').onclick=()=>{if(GSTEP>1){GSTEP--;gStepUI();}};
 document.getElementById('gNext').onclick=()=>{
   if(GSTEP===1){ if(!gValidate1())return; GSTEP=2; gStepUI(); return; }
