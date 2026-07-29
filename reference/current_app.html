@@ -1081,6 +1081,7 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
         <label><input type="radio" name="npseed" value="tpl" checked><span><b>기본 WBS 템플릿</b><small>준비·기획 → UX → UI → 퍼블·프론트 → 백엔드 → 통합·QA → 오픈 (22개 태스크, 모두 예정)</small></span></label>
         <label><input type="radio" name="npseed" value="clone"><span><b>현재 프로젝트 복제</b><small id="npCloneSub">지금 보고 있는 프로젝트의 단계·태스크·의존관계를 그대로 복사 (상태는 예정으로 초기화)</small></span></label>
         <label><input type="radio" name="npseed" value="empty"><span><b>빈 프로젝트</b><small>단계·파트와 시작 태스크 1개만 두고, 나머지는 직접 추가</small></span></label>
+        <label><input type="radio" name="npseed" value="gen"><span><b>요구사항 기반 자동 생성</b><small>요구사항·범위·기간을 입력하면 규칙 기반으로 일정을 자동으로 짜서 만듭니다</small></span></label>
       </div>
     </div>
   </div>
@@ -1145,6 +1146,7 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
 <div class="overlay" id="genOverlay"><div class="modal wide">
   <h2><span id="gTitle">일정 자동 생성 · 1/3 유형과 기준</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
   <div class="gsteps"><i class="on"></i><i></i><i></i></div>
+  <div class="gnote" id="gBackNp" style="display:none;margin:0 0 12px"><a href="javascript:void(0)" id="gBackNpLink" style="color:var(--acc);font-weight:650;text-decoration:none;display:inline-flex;align-items:center;gap:4px"><svg class="icn s13"><use href="#i-chevron-left"></use></svg> 새 프로젝트 만들기로 돌아가기</a></div>
   <div class="mbody">
 
     <div class="gpane on" id="gPane1">
@@ -2080,6 +2082,14 @@ document.getElementById('npCreate').onclick=()=>{
   const name=document.getElementById('npName').value.trim();
   if(!name){document.getElementById('errNpName').textContent='프로젝트명을 입력하세요';return;}
   const seedMode=(document.querySelector('input[name="npseed"]:checked')||{}).value||'tpl';
+  if(seedMode==='gen'){
+    const today=document.getElementById('npToday').value;
+    const buffer=document.getElementById('npBuffer').value;
+    const myRole=document.getElementById('npRole').value;
+    closeAll();
+    openGenForNewProj(name,today,buffer,myRole);
+    return;
+  }
   const src=seedMode==='clone'?MODEL:SEED;
   const np=normProj(clone(seedMode==='empty'?{phases:clone(MODEL.phases),roles:clone(MODEL.roles),statuses:clone(MODEL.statuses),tasks:starterTasks()}:src),WS.projects.length);
   np.id='p'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
@@ -2910,11 +2920,12 @@ function gPack(tpl,cfg,r,par,wdAvail,startISO){
 }
 
 /* ---------------- 생성 모달 ---------------- */
-let GSTEP=1,GRES=null,GEX=[],GTPLK='web',GMODE='A';
+let GSTEP=1,GRES=null,GEX=[],GTPLK='web',GMODE='A',GNP=null;
 const GTITLE=['','일정 자동 생성 · 1/3 유형과 기준','일정 자동 생성 · 2/3 범위와 요구사항','일정 자동 생성 · 3/3 미리보기와 진단'];
 
 function openGen(){
-  GSTEP=1;GRES=null;GEX=[];
+  GSTEP=1;GRES=null;GEX=[];GNP=null;
+  document.getElementById('gBackNp').style.display='none';
   document.getElementById('gTplBox').innerHTML=Object.keys(GTPL).map(k=>
     '<label><input type="radio" name="gtpl" value="'+k+'"'+(k===GTPLK?' checked':'')+'>'+
     '<span><b>'+esc(GTPL[k].label)+'</b><small>'+esc(GTPL[k].desc)+'</small></span></label>').join('');
@@ -2929,6 +2940,22 @@ function openGen(){
   gModeUI();gStepUI();
   document.getElementById('genOverlay').classList.add('on');
 }
+// 새 프로젝트 만들기 모달의 '요구사항 기반 자동 생성'에서 진입 — 이름·기준일·버퍼·내 역할을 이어받는다
+function openGenForNewProj(name,today,buffer,myRole){
+  openGen();
+  GNP={name:String(name||'').trim(),role:myRole};
+  if(today)document.getElementById('gStart').value=today;
+  const buf=parseInt(buffer,10);
+  if(!isNaN(buf))document.getElementById('gBuf').value=buf;
+  document.getElementById('gBackNp').style.display='';
+}
+document.getElementById('gBackNpLink').onclick=()=>{
+  const nm=GNP?GNP.name:'', role=GNP?GNP.role:null;
+  closeAll();openNewProj();
+  document.getElementById('npName').value=nm;
+  if(role)document.getElementById('npRole').value=role;
+  document.querySelector('input[name="npseed"][value="gen"]').checked=true;
+};
 function gModeUI(){
   document.querySelectorAll('#gModeSeg button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-gm')===GMODE));
   document.getElementById('gfOpen').style.display=GMODE==='C'?'none':'';
@@ -3017,13 +3044,16 @@ function gRenderPreview(){
     '</tbody></table></div></div>'+
     '<div class="field"><label>생성될 태스크 '+R.tasks.length+'개</label><div class="gprev"><table>'+
       '<thead><tr><th>ID</th><th>태스크</th><th>역할</th><th>공수 · 기간</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
-    '<div class="field"><label>반영 방식</label><div class="npopt">'+
+    (GNP
+      ? '<div class="field"><label>반영 방식</label><div class="gnote">새 프로젝트로 생성됩니다'+
+        '<input type="radio" name="gapply" value="new" checked style="display:none"></div></div>'
+      : '<div class="field"><label>반영 방식</label><div class="npopt">'+
       '<label><input type="radio" name="gapply" value="new" checked><span><b>새 프로젝트로 생성</b>'+
         '<small>현재 프로젝트는 그대로 두고 새 프로젝트를 만듭니다</small></span></label>'+
       '<label><input type="radio" name="gapply" value="over"><span><b>현재 프로젝트에 덮어쓰기</b>'+
         '<small>"'+esc(MODEL.settings.project)+'"의 단계·태스크를 교체합니다 — 되돌리기로 복구할 수 있습니다</small></span></label>'+
-    '</div></div>'+
-    '<div class="field" id="gNewNameF"><label>새 프로젝트명</label><input id="gNewName" value="'+esc(R.tpl.label)+'"></div>';
+    '</div></div>')+
+    '<div class="field" id="gNewNameF"><label>새 프로젝트명</label><input id="gNewName" value="'+esc((GNP&&GNP.name)||R.tpl.label)+'"></div>';
   const upd=()=>{const v=(document.querySelector('input[name="gapply"]:checked')||{}).value;
     document.getElementById('gNewNameF').style.display=v==='over'?'none':'';};
   document.querySelectorAll('input[name="gapply"]').forEach(x=>x.onchange=upd); upd();
@@ -3056,9 +3086,10 @@ function gApplyNow(){
     statuses:clone(MODEL.statuses),phases:clone(tpl.phases),roles:clone(tpl.roles),
     holidays:clone(MODEL.holidays||[]),people:[],tasks:clone(R.tasks)},WS.projects.length);
   np.id='p'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
-  np.settings.my_role='PM';
+  np.settings.my_role=(GNP&&GNP.role&&MY_ROLES.indexOf(GNP.role)>=0)?GNP.role:'PM';
   np.settings.color=PCOL[WS.projects.length%PCOL.length];
   WS.projects.push(np);
+  GNP=null;
   closeAll(); switchProject(np.id);
   toast('"'+nm+'" 프로젝트를 생성했습니다 ('+R.tasks.length+'개 태스크)');
 }
