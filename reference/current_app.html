@@ -49,6 +49,7 @@ h1{font-size:26px;margin:0}
 .rwbar .tip b{color:#a9e4b7}
 .rwbar:hover .tip{opacity:1;transform:translateY(0)}
 .strip{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:22px}
+.scr-strip{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:22px}
 .cell{background:#ffffff;padding:14px 16px}
 .cell.anchor-cell{background:#f7faf8}
 .cell.anchor-cell .v{font-size:24px}
@@ -60,7 +61,7 @@ h1{font-size:26px;margin:0}
 .cell .d2 b{color:#5b6470;font-weight:600}
 .progress{height:6px;background:#eceef1;border-radius:4px;margin-top:8px;overflow:hidden}
 .progress>div{height:100%;background:#3fae5f}
-@media(max-width:860px){.strip{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){.strip{grid-template-columns:repeat(2,1fr)}.scr-strip{grid-template-columns:repeat(2,1fr)}}
 .ctrlbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .tabs{display:flex;gap:4px}
 .tab{padding:10px 17px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:14px;color:#556}
@@ -347,7 +348,7 @@ body{color:var(--ink);background:
 .kcard{background:var(--glass-2);border:1px solid var(--gbrd);box-shadow:0 4px 14px rgba(30,42,90,.07)}
 /* table containers: glass frame, no blur (keeps sticky-scroll crisp) */
 .card{background:var(--glass);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
-.strip{background:var(--gdiv);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
+.strip,.scr-strip{background:var(--gdiv);border:1px solid var(--gbrd);box-shadow:var(--gshadow)}
 .cell{background:#fff}
 /* dense table: transparent rows show frosted card; frozen cells stay near-opaque so timeline hides on scroll */
 .gtbl thead th{background:rgba(246,248,252,.72)}
@@ -634,6 +635,7 @@ body.view-pool .kpis,body.view-pool .ctrlbar,body.view-pool .edittoolbar,body.vi
 .imp-pane{display:none}
 .imp-pane.on{display:block}
 #impPaste{min-height:132px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.65}
+#scrImpPaste{min-height:132px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.65}
 .imp-prev{max-height:224px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}
 .imp-prev table{width:100%;border-collapse:collapse;font-size:12.5px}
 .imp-prev th{position:sticky;top:0;background:#fafbfc;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:11px;color:var(--sub);font-weight:650}
@@ -928,6 +930,7 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
     <div class="tab" data-p="kanban">칸반</div>
     <div class="tab" data-p="mm">M/M 집계</div>
     <div class="tab" data-p="cp">크리티컬 패스</div>
+    <div class="tab" data-p="screens">화면 현황</div>
   </div>
 </div>
 
@@ -994,6 +997,39 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
   </div>
 </div>
 </div></div>
+
+<div class="panel" id="p-screens">
+<div class="card" style="padding:16px 18px;margin-bottom:16px">
+<div class="sec-hd" style="margin:0 0 12px"><h2>화면 현황</h2><em>화면 단위로 진행 상태를 추적하고 담당자별로 자동 집계합니다</em></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <input class="psearch" id="scrQ" placeholder="화면ID·화면명·경로·담당자 검색">
+    <select class="pfilter" id="scrAsgF"></select>
+    <select class="pfilter" id="scrStF"></select>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" type="button" id="scrImpBtn"><svg class="icn s14"><use href="#i-upload"></use></svg> 가져오기</button>
+    <button class="btn" type="button" id="scrSnapBtn"><svg class="icn s14"><use href="#i-sparkles"></use></svg> 스냅샷 저장</button>
+    <button class="btn primary" type="button" id="scrAddBtn"><svg class="icn s14"><use href="#i-plus"></use></svg> 화면 추가</button>
+  </div>
+</div>
+<div class="scr-strip" id="scrStrip" style="margin-top:0"></div>
+</div>
+<div class="card" style="padding:16px 18px;margin-bottom:16px">
+<h3 style="margin:0 0 10px;font-size:14px">담당자별 현황</h3>
+<div style="overflow:auto" id="scrDashWrap"></div>
+</div>
+<div class="card" style="padding:0;margin-bottom:16px">
+<div style="overflow:auto" id="scrTableWrap"></div>
+</div>
+<div class="card" style="padding:16px 18px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+<h3 style="margin:0;font-size:14px">주차별 스냅샷 이력</h3>
+<span class="gnote" id="scrSnapNote" style="margin:0">현재 상태를 스냅샷으로 저장하면 여기 쌓입니다</span>
+</div>
+<div style="overflow:auto;margin-top:10px" id="scrSnapWrap"></div>
+</div>
+</div>
 
 <div class="panel" id="p-list">
 <div class="card">
@@ -1142,6 +1178,48 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
   </div>
 </div></div>
 
+<!-- ===== 화면 추가·수정 ===== -->
+<div class="overlay" id="screenOverlay"><div class="modal">
+  <h2><span id="screenTitle">화면 추가</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
+  <div class="mbody">
+    <div class="row2">
+      <div class="field"><label>화면 ID</label><input id="scId" placeholder="예: HM-001"></div>
+      <div class="field"><label>화면명 *</label><input id="scName" placeholder="예: 홈 메인"><div class="err" id="errScName"></div></div>
+    </div>
+    <div class="field"><label>경로 <span class="sublbl">예: 홈 &gt; 메인 &gt; 배너</span></label><input id="scPath" placeholder="예: 홈 > 메인"></div>
+    <div class="row2">
+      <div class="field"><label>담당자</label><select id="scAssignee"></select></div>
+      <div class="field"><label>상태</label><select id="scStatus"></select></div>
+    </div>
+    <div class="field"><label>비고</label><input id="scNote"></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn danger" id="screenDelete">삭제</button>
+    <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="screenSave">저장</button></div>
+  </div>
+</div></div>
+
+<!-- ===== 화면 목록 가져오기 ===== -->
+<div class="overlay" id="scrImpOverlay"><div class="modal wide">
+  <h2><span>화면 목록 가져오기</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
+  <div class="mbody">
+    <div class="imp-tabs"><button type="button" data-scrimp="paste" class="on">붙여넣기</button><button type="button" data-scrimp="file">CSV 파일</button></div>
+    <div class="imp-pane on" id="scrImpPastePane">
+      <div class="field"><label>IA 문서·엑셀에서 화면ID·화면명 등의 표 영역을 복사해 그대로 붙여넣으세요</label>
+        <textarea id="scrImpPaste" placeholder="화면ID&#9;화면명&#9;경로&#9;담당자&#9;상태&#10;HM-001&#9;홈 메인&#9;홈 > 메인&#9;이진아&#9;진행중"></textarea></div>
+    </div>
+    <div class="imp-pane" id="scrImpFilePane">
+      <div class="field"><label>CSV 파일 선택 (.csv)</label><input id="scrImpFile" type="file" accept=".csv,text/csv,text/plain"></div>
+      <div class="imp-note" id="scrImpFileName"></div>
+    </div>
+    <div class="imp-note">첫 줄이 머리글이면 자동 인식합니다 — <b>화면ID/화면코드/id</b>, <b>화면명/이름/name</b>, <b>경로/뎁스/depth/path</b>, <b>담당자/디자이너/assignee</b>, <b>상태/진행상태/status</b>. 머리글이 없으면 <b>화면ID · 화면명 · 경로 · 담당자 · 상태</b> 순서로 읽습니다. 상태값은 <b>미발행·진행중·업데이트·발행예정·발행·완료</b> 중 하나로 맞춰주면 자동 매칭되고, 그 외 값은 <b>미발행</b>으로 들어갑니다. 화면ID(없으면 화면명)가 같으면 기존 화면을 갱신합니다.</div>
+    <div id="scrImpResult"></div>
+  </div>
+  <div class="mfoot"><span id="scrImpSum" style="font-size:12px;color:#9aa2ab">붙여넣거나 파일을 선택하면 미리보기가 표시됩니다</span>
+    <div style="display:flex;gap:8px"><button class="btn" data-close>취소</button><button class="btn primary" id="scrImpApply">가져오기</button></div>
+  </div>
+</div></div>
+
 <!-- ===== 일정 자동 생성 ===== -->
 <div class="overlay" id="genOverlay"><div class="modal wide">
   <h2><span id="gTitle">일정 자동 생성 · 1/3 유형과 기준</span><span class="x" data-close><svg class="icn"><use href="#i-x"></use></svg></span></h2>
@@ -1262,6 +1340,35 @@ const SEED=JSON.parse(document.getElementById('wbs-model').textContent);
 const LS_KEY='schedule-manager-model';                  // 구버전(단일 프로젝트) 키 — 마이그레이션용
 const WS_KEY='greencast-workspace';                     // 신버전(워크스페이스=여러 프로젝트) 키
 const MY_ROLES=["PM","PL","참여","없음"];                 // 프로젝트별 내 역할
+// ---- 화면 현황(Screen Board) — 6단계 상태값 · 색상 ----
+const SCR_STATUSES=['미발행','진행중','업데이트','발행예정','발행','완료'];
+const SCR_SB={'미발행':["#eef0f2","#5b6470"],'진행중':["#e7f0fd","#1a56db"],'업데이트':["#fef3e0","#b45309"],'발행예정':["#f1ecfd","#6d28d9"],'발행':["#e6f7f5","#0f766e"],'완료':["#e7f6ec","#1a7f37"]};
+const SCR_IMP_ALIAS={
+  code:['화면id','화면코드','화면번호','id','code'],
+  name:['화면명','이름','화면','name','title'],
+  path:['경로','뎁스','depth','path','메뉴경로','ia'],
+  assignee:['담당자','디자이너','담당','assignee','designer'],
+  status:['상태','진행상태','status']
+};
+function scrMatchStatus(v){
+  v=String(v||'').trim(); if(!v)return '미발행';
+  if(SCR_STATUSES.indexOf(v)>=0)return v;
+  const nv=v.replace(/\s/g,'');
+  const hit=SCR_STATUSES.find(x=>x.replace(/\s/g,'')===nv);
+  return hit||'미발행';
+}
+function normScreen(o,i,today){
+  o=o||{};
+  return {id:o.id||('sc'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36)+(i||0)),
+    code:String(o.code||'').trim(),name:String(o.name||'').trim()||('화면 '+((i||0)+1)),
+    path:String(o.path||'').trim(),assignee:String(o.assignee||'').trim(),
+    status:scrMatchStatus(o.status),note:String(o.note||'').trim(),updatedAt:o.updatedAt||today||''};
+}
+function normSnapshot(o){
+  o=o||{};
+  const bs={};SCR_STATUSES.forEach(x=>bs[x]=(o.byStatus&&o.byStatus[x])||0);
+  return {date:o.date||'',byStatus:bs,total:o.total||SCR_STATUSES.reduce((a,x)=>a+bs[x],0)};
+}
 const PCOL=['#4ecb6a','#2563eb','#8b5cf6','#d97706','#0d9488','#e0518a','#0ea5e9','#6b7280'];
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -1288,6 +1395,8 @@ function normProj(p,i){
   p.staff=p.staff||{};
   p.staff.domain=String(p.staff.domain||'');
   p.staff.roles=(p.staff.roles&&typeof p.staff.roles==='object')?p.staff.roles:{};
+  p.screens=(p.screens||[]).map((o,i)=>normScreen(o,i,s.today));
+  p.screenSnapshots=(p.screenSnapshots||[]).map(normSnapshot);
   return p;
 }
 // ---- 인력풀(워크스페이스 공통 인력 마스터) ----
@@ -1681,7 +1790,7 @@ function renderProject(){
     simWhatIf();
   }
 
-  renderList(sc,roll,PM); renderKanban(sc,PM);
+  renderList(sc,roll,PM); renderKanban(sc,PM); renderScreens();
 
   document.querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>{if(suppressClick)return;openTask(el.getAttribute('data-edit'));});
   document.querySelectorAll('[data-roleedit]').forEach(td=>td.onclick=e=>{e.stopPropagation();inlineRole(td,td.getAttribute('data-roleedit'));});
@@ -3682,6 +3791,260 @@ function stfApplyNow(){
 document.getElementById('stfNext').onclick=()=>stfRun();
 document.getElementById('stfBack').onclick=()=>{STFSTEP=1;stfStepUI();};
 document.getElementById('stfApply').onclick=()=>stfApplyNow();
+
+// ===================================================================
+// 화면 현황 (Screen Board) — 화면 단위 진행 상태 추적 + 담당자별 집계
+// ===================================================================
+let scrQv='',scrAsgFv='',scrStFv='',screenEditId=null,scrImpRows=[];
+function scrRollup(list){
+  const byStatus={},byAssignee={};
+  SCR_STATUSES.forEach(x=>byStatus[x]=0);
+  list.forEach(sc=>{
+    byStatus[sc.status]=(byStatus[sc.status]||0)+1;
+    const a=sc.assignee||'미지정';
+    byAssignee[a]=byAssignee[a]||{}; SCR_STATUSES.forEach(x=>{if(byAssignee[a][x]==null)byAssignee[a][x]=0;});
+    byAssignee[a][sc.status]=(byAssignee[a][sc.status]||0)+1;
+  });
+  return {byStatus:byStatus,byAssignee:byAssignee,total:list.length};
+}
+function scrFiltered(){
+  const kw=scrQv.trim().toLowerCase();
+  return (MODEL.screens||[]).filter(sc=>{
+    if(scrAsgFv){ if(scrAsgFv==='__none'){ if(sc.assignee)return false; } else if(sc.assignee!==scrAsgFv)return false; }
+    if(scrStFv&&sc.status!==scrStFv)return false;
+    if(!kw)return true;
+    return (sc.code+' '+sc.name+' '+sc.path+' '+sc.assignee+' '+sc.note).toLowerCase().indexOf(kw)>=0;
+  });
+}
+function renderScreens(){
+  const all=MODEL.screens||[];
+  const af=document.getElementById('scrAsgF');
+  const names=[...new Set(all.map(sc=>sc.assignee).filter(Boolean))].sort();
+  af.innerHTML='<option value="">전체 담당자</option>'+names.map(nm=>'<option value="'+esc(nm)+'"'+(nm===scrAsgFv?' selected':'')+'>'+esc(nm)+'</option>').join('')+
+    '<option value="__none"'+(scrAsgFv==='__none'?' selected':'')+'>미지정</option>';
+  const sf=document.getElementById('scrStF');
+  sf.innerHTML='<option value="">전체 상태</option>'+SCR_STATUSES.map(x=>'<option value="'+x+'"'+(x===scrStFv?' selected':'')+'>'+x+'</option>').join('');
+  const qi=document.getElementById('scrQ'); if(document.activeElement!==qi)qi.value=scrQv;
+
+  const roll=scrRollup(all);
+  const doneN=roll.byStatus['완료']||0, progN=roll.byStatus['진행중']||0, unpubN=roll.byStatus['미발행']||0;
+  document.getElementById('scrStrip').innerHTML=
+    cell('전체 화면',all.length+'<small> 개</small>','등록된 화면 기준')+
+    cell('완료',doneN+'<small> 개</small>',all.length?(Math.round(doneN/all.length*100)+'%'):'—')+
+    cell('진행중',progN+'<small> 개</small>','디자인 진행 중')+
+    cell('미발행',unpubN+'<small> 개</small>','아직 착수 전');
+
+  const asgNames=Object.keys(roll.byAssignee).sort((a,b)=>(a==='미지정')?1:((b==='미지정')?-1:a.localeCompare(b,'ko')));
+  if(all.length){
+    let dh='<table class="ptable"><thead><tr><th>담당자</th>'+SCR_STATUSES.map(x=>'<th class="mono">'+x+'</th>').join('')+'<th class="mono">합계</th></tr></thead><tbody>';
+    asgNames.forEach(nm=>{
+      const row=roll.byAssignee[nm]; const tot=SCR_STATUSES.reduce((a,x)=>a+(row[x]||0),0);
+      dh+='<tr><td class="nm">'+esc(nm)+'</td>'+SCR_STATUSES.map(x=>'<td class="mono">'+(row[x]||0)+'</td>').join('')+'<td class="mono"><b>'+tot+'</b></td></tr>';
+    });
+    dh+='<tr><td class="nm">총계</td>'+SCR_STATUSES.map(x=>'<td class="mono"><b>'+(roll.byStatus[x]||0)+'</b></td>').join('')+'<td class="mono"><b>'+all.length+'</b></td></tr>';
+    dh+='</tbody></table>';
+    document.getElementById('scrDashWrap').innerHTML=dh;
+  }else document.getElementById('scrDashWrap').innerHTML='<div class="pool-empty">등록된 화면이 없습니다</div>';
+
+  const list=scrFiltered().slice().sort((a,b)=>(a.code||a.name).localeCompare(b.code||b.name,'ko'));
+  document.getElementById('scrTableWrap').innerHTML=list.length?
+    '<table class="ptable"><thead><tr><th>화면ID</th><th>화면명</th><th>경로</th><th>담당자</th><th>상태</th><th>최종수정</th><th></th></tr></thead><tbody>'+
+    list.map(sc=>'<tr>'+
+      '<td class="mono">'+esc(sc.code||'—')+'</td>'+
+      '<td class="nm">'+esc(sc.name)+'</td>'+
+      '<td>'+esc(sc.path||'—')+'</td>'+
+      '<td>'+esc(sc.assignee||'미지정')+'</td>'+
+      '<td><span class="badge cyc" data-scrcyc="'+sc.id+'" title="클릭해 상태 변경" style="background:'+SCR_SB[sc.status][0]+';color:'+SCR_SB[sc.status][1]+'">'+esc(sc.status)+'</span></td>'+
+      '<td class="mono">'+esc(sc.updatedAt||'—')+'</td>'+
+      '<td><div class="pact"><button type="button" data-scredit="'+sc.id+'" title="수정">'+icn('pencil','s14')+'</button><button type="button" class="del" data-scrrm="'+sc.id+'" title="삭제">'+icn('trash','s14')+'</button></div></td>'+
+    '</tr>').join('')+'</tbody></table>'
+    :'<div class="pool-empty">'+(all.length?'조건에 맞는 화면이 없습니다':'등록된 화면이 없습니다 — <b>+ 화면 추가</b> 또는 <b>가져오기</b>로 시작하세요')+'</div>';
+
+  document.querySelectorAll('[data-scredit]').forEach(el=>el.onclick=()=>openScreen(el.getAttribute('data-scredit')));
+  document.querySelectorAll('[data-scrrm]').forEach(el=>el.onclick=()=>{
+    const sc=(MODEL.screens||[]).find(x=>x.id===el.getAttribute('data-scrrm')); if(!sc)return;
+    if(!confirm('"'+sc.name+'" 화면을 삭제할까요?'))return;
+    MODEL.screens=MODEL.screens.filter(x=>x.id!==sc.id);
+    persist();renderScreens();toast('삭제됨 — '+sc.name);
+  });
+  document.querySelectorAll('[data-scrcyc]').forEach(el=>el.onclick=()=>scrCycleStatus(el.getAttribute('data-scrcyc')));
+
+  const snaps=(MODEL.screenSnapshots||[]).slice().sort((a,b)=>a.date<b.date?1:(a.date>b.date?-1:0));
+  if(snaps.length){
+    let sh='<table class="ptable"><thead><tr><th>저장일</th>'+SCR_STATUSES.map(x=>'<th class="mono">'+x+'</th>').join('')+'<th class="mono">전체</th><th class="mono">발행율</th><th></th></tr></thead><tbody>';
+    snaps.forEach(sn=>{
+      const tot=sn.total||SCR_STATUSES.reduce((a,x)=>a+(sn.byStatus[x]||0),0);
+      const pubRate=tot?Math.round(((sn.byStatus['발행']||0)+(sn.byStatus['완료']||0))/tot*100):0;
+      sh+='<tr><td class="mono">'+esc(sn.date)+'</td>'+SCR_STATUSES.map(x=>'<td class="mono">'+(sn.byStatus[x]||0)+'</td>').join('')+
+        '<td class="mono"><b>'+tot+'</b></td><td class="mono">'+pubRate+'%</td>'+
+        '<td><div class="pact"><button type="button" class="del" data-snaprm="'+esc(sn.date)+'" title="삭제">'+icn('trash','s14')+'</button></div></td></tr>';
+    });
+    sh+='</tbody></table>';
+    document.getElementById('scrSnapWrap').innerHTML=sh;
+  }else document.getElementById('scrSnapWrap').innerHTML='<div class="pool-empty">아직 저장된 스냅샷이 없습니다 — 위 <b>스냅샷 저장</b> 버튼으로 현재 상태를 기록하세요</div>';
+  document.getElementById('scrSnapNote').textContent=snaps.length?(snaps.length+'개 스냅샷 저장됨'):'현재 상태를 스냅샷으로 저장하면 여기 쌓입니다';
+  document.querySelectorAll('[data-snaprm]').forEach(el=>el.onclick=()=>{
+    const d=el.getAttribute('data-snaprm');
+    MODEL.screenSnapshots=(MODEL.screenSnapshots||[]).filter(x=>x.date!==d);
+    persist();renderScreens();toast('스냅샷 삭제됨 — '+d);
+  });
+}
+function scrCycleStatus(id){
+  const sc=(MODEL.screens||[]).find(x=>x.id===id); if(!sc)return;
+  const i=SCR_STATUSES.indexOf(sc.status);
+  sc.status=SCR_STATUSES[(i+1)%SCR_STATUSES.length];
+  sc.updatedAt=MODEL.settings.today;
+  persist();renderScreens();
+}
+document.getElementById('scrQ').addEventListener('input',e=>{scrQv=e.target.value;renderScreens();});
+document.getElementById('scrAsgF').addEventListener('change',e=>{scrAsgFv=e.target.value;renderScreens();});
+document.getElementById('scrStF').addEventListener('change',e=>{scrStFv=e.target.value;renderScreens();});
+
+// ---- 화면 추가·수정 ----
+function openScreen(id){
+  screenEditId=id||null;
+  const sc=id?(MODEL.screens||[]).find(x=>x.id===id):null;
+  document.getElementById('screenTitle').textContent=id?'화면 수정':'화면 추가';
+  document.getElementById('scId').value=sc?sc.code:'';
+  document.getElementById('scName').value=sc?sc.name:'';
+  document.getElementById('scPath').value=sc?sc.path:'';
+  const names=[...new Set((MODEL.people||[]).concat((WS.pool||[]).map(q=>q.name)))].filter(Boolean).sort();
+  const asel=document.getElementById('scAssignee');
+  asel.innerHTML='<option value="">미지정</option>'+names.map(nm=>'<option value="'+esc(nm)+'"'+(sc&&sc.assignee===nm?' selected':'')+'>'+esc(nm)+'</option>').join('');
+  optionList(document.getElementById('scStatus'),SCR_STATUSES,sc?sc.status:'미발행');
+  document.getElementById('scNote').value=sc?sc.note:'';
+  document.getElementById('errScName').textContent='';
+  document.getElementById('screenDelete').style.display=id?'':'none';
+  document.getElementById('screenOverlay').classList.add('on');
+  setTimeout(()=>document.getElementById('scName').focus(),40);
+}
+document.getElementById('scrAddBtn').onclick=()=>openScreen(null);
+document.getElementById('screenSave').onclick=()=>{
+  const name=document.getElementById('scName').value.trim();
+  if(!name){document.getElementById('errScName').textContent='화면명을 입력하세요';return;}
+  MODEL.screens=MODEL.screens||[];
+  const data={code:document.getElementById('scId').value.trim(),name:name,path:document.getElementById('scPath').value.trim(),
+    assignee:document.getElementById('scAssignee').value,status:document.getElementById('scStatus').value,
+    note:document.getElementById('scNote').value.trim()};
+  if(screenEditId){
+    const sc=MODEL.screens.find(x=>x.id===screenEditId); if(!sc)return;
+    const changed=sc.status!==data.status;
+    Object.assign(sc,data); if(changed)sc.updatedAt=MODEL.settings.today;
+  }else{
+    MODEL.screens.push(normScreen(Object.assign({updatedAt:MODEL.settings.today},data),MODEL.screens.length,MODEL.settings.today));
+  }
+  persist();closeAll();renderScreens();toast('저장됨 — '+name);
+};
+document.getElementById('screenDelete').onclick=()=>{
+  if(!screenEditId)return;
+  const sc=(MODEL.screens||[]).find(x=>x.id===screenEditId); if(!sc)return;
+  if(!confirm('"'+sc.name+'" 화면을 삭제할까요?'))return;
+  MODEL.screens=MODEL.screens.filter(x=>x.id!==sc.id);
+  persist();closeAll();renderScreens();toast('삭제됨 — '+sc.name);
+};
+['screenOverlay','scrImpOverlay'].forEach(id=>{
+  const o=document.getElementById(id);
+  o.onclick=e=>{if(e.target===o)o.classList.remove('on');};
+});
+
+// ---- 화면 목록 붙여넣기·CSV 가져오기 ----
+function parseScreensText(txt){
+  txt=String(txt||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n');
+  const lines=txt.split('\n').filter(l=>l.trim());
+  if(!lines.length)return [];
+  const h0=lines[0];
+  const d=h0.indexOf('\t')>=0?'\t':((h0.indexOf(';')>=0&&h0.indexOf(',')<0)?';':',');
+  let rows=lines.map(l=>splitDelim(l,d));
+  const nk=x=>String(x||'').toLowerCase().replace(/[\s()%·.\-_/]/g,'');
+  const head=rows[0].map(nk);
+  const map={};let hasHead=false;
+  Object.keys(SCR_IMP_ALIAS).forEach(k=>{
+    const i=head.findIndex(c=>c&&SCR_IMP_ALIAS[k].some(a=>nk(a)===c));
+    if(i>=0){map[k]=i;hasHead=true;}
+  });
+  if(hasHead)rows=rows.slice(1);
+  else{map.code=0;map.name=1;map.path=2;map.assignee=3;map.status=4;}
+  const g=(r,k)=>(map[k]==null?'':String(r[map[k]]||'').trim());
+  const out=[];
+  rows.forEach(r=>{
+    const nm=g(r,'name'),code=g(r,'code');
+    if(!nm&&!code)return;
+    out.push({code:code,name:nm||code,path:g(r,'path'),assignee:g(r,'assignee'),status:scrMatchStatus(g(r,'status'))});
+  });
+  return out;
+}
+function openScrImport(){
+  scrImpRows=[];
+  document.getElementById('scrImpPaste').value='';
+  document.getElementById('scrImpFileName').textContent='';
+  try{document.getElementById('scrImpFile').value='';}catch(_){}
+  document.querySelectorAll('[data-scrimp]').forEach(b=>b.classList.toggle('on',b.getAttribute('data-scrimp')==='paste'));
+  document.getElementById('scrImpPastePane').classList.add('on');
+  document.getElementById('scrImpFilePane').classList.remove('on');
+  renderScrImpPreview();
+  document.getElementById('scrImpOverlay').classList.add('on');
+  setTimeout(()=>document.getElementById('scrImpPaste').focus(),40);
+}
+document.getElementById('scrImpBtn').onclick=openScrImport;
+document.querySelectorAll('[data-scrimp]').forEach(b=>b.onclick=()=>{
+  const k=b.getAttribute('data-scrimp');
+  document.querySelectorAll('[data-scrimp]').forEach(x=>x.classList.toggle('on',x===b));
+  document.getElementById('scrImpPastePane').classList.toggle('on',k==='paste');
+  document.getElementById('scrImpFilePane').classList.toggle('on',k==='file');
+});
+document.getElementById('scrImpPaste').addEventListener('input',e=>{scrImpRows=parseScreensText(e.target.value);renderScrImpPreview();});
+document.getElementById('scrImpFile').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  document.getElementById('scrImpFileName').textContent=f.name+' · '+Math.max(1,Math.round(f.size/1024))+'KB';
+  const rd=new FileReader();
+  rd.onload=()=>{scrImpRows=parseScreensText(String(rd.result||''));renderScrImpPreview();};
+  rd.readAsText(f,'utf-8');
+});
+function scrImpMatch(r){
+  MODEL.screens=MODEL.screens||[];
+  if(r.code){const m=MODEL.screens.find(x=>x.code&&x.code===r.code);if(m)return m;}
+  return MODEL.screens.find(x=>x.name===r.name)||null;
+}
+function renderScrImpPreview(){
+  const box=document.getElementById('scrImpResult'), sum=document.getElementById('scrImpSum');
+  if(!scrImpRows.length){box.innerHTML='';sum.innerHTML='붙여넣거나 파일을 선택하면 미리보기가 표시됩니다';return;}
+  let nN=0,nU=0;
+  const body=scrImpRows.map(r=>{const m=scrImpMatch(r); if(m)nU++; else nN++;
+    return '<tr><td>'+(m?'<span class="tagU">갱신</span>':'<span class="tagN">신규</span>')+'</td>'+
+      '<td class="mono">'+esc(r.code||'—')+'</td><td><b>'+esc(r.name)+'</b></td><td>'+esc(r.path||'—')+'</td>'+
+      '<td>'+esc(r.assignee||'—')+'</td><td>'+esc(r.status)+'</td></tr>';}).join('');
+  box.innerHTML='<div class="imp-prev"><table><thead><tr><th></th><th>화면ID</th><th>화면명</th><th>경로</th><th>담당자</th><th>상태</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+  sum.innerHTML='총 <b>'+scrImpRows.length+'</b>건 — 신규 <b style="color:#1a7f37">'+nN+'</b> · 갱신 <b style="color:#1a56db">'+nU+'</b>';
+}
+document.getElementById('scrImpApply').onclick=()=>{
+  if(!scrImpRows.length){toast('가져올 데이터가 없습니다');return;}
+  let nN=0,nU=0;
+  MODEL.screens=MODEL.screens||[];
+  scrImpRows.forEach(r=>{
+    const m=scrImpMatch(r);
+    if(m){
+      if(r.code)m.code=r.code; m.name=r.name||m.name; if(r.path)m.path=r.path; if(r.assignee)m.assignee=r.assignee;
+      m.status=r.status; m.updatedAt=MODEL.settings.today; nU++;
+    }else{MODEL.screens.push(normScreen(Object.assign({updatedAt:MODEL.settings.today},r),MODEL.screens.length,MODEL.settings.today));nN++;}
+  });
+  persist();closeAll();renderScreens();
+  toast('가져오기 완료 — 신규 '+nN+'개 · 갱신 '+nU+'개');
+};
+
+// ---- 주차별 스냅샷 저장 ----
+function saveScreenSnapshot(){
+  const list=MODEL.screens||[];
+  if(!list.length){toast('저장할 화면이 없습니다');return;}
+  const roll=scrRollup(list);
+  const today=MODEL.settings.today;
+  MODEL.screenSnapshots=MODEL.screenSnapshots||[];
+  const existing=MODEL.screenSnapshots.find(x=>x.date===today);
+  if(existing){existing.byStatus=roll.byStatus;existing.total=list.length;toast(today+' 스냅샷을 갱신했습니다');}
+  else{MODEL.screenSnapshots.push({date:today,byStatus:roll.byStatus,total:list.length});toast(today+' 스냅샷을 저장했습니다');}
+  persist();renderScreens();
+}
+document.getElementById('scrSnapBtn').onclick=saveScreenSnapshot;
+
 
 mode=MODEL.settings.weekend_default==='on'?'on':'off';
 syncWeekendUI();
