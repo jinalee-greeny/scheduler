@@ -1186,6 +1186,13 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
           <span class="gnote" style="margin:0">대부분의 사이트는 CORS 때문에 "가져오기 시도"가 막힙니다 — 그럴 땐 sitemap.xml을 새 탭에서 열어 내용을 복사해 붙여넣어 주세요</span>
         </div>
       </div>
+      <div class="field" id="gBatchField"><label><input type="checkbox" id="gBatchOn" style="width:auto;margin:0 4px 0 0;vertical-align:-2px"> 화면을 차수로 나눠 배포 <span class="sublbl">디자인·퍼블리싱·개발·QA·배포까지 차수별로 겹쳐 흐르는 일정으로 쪼갭니다 — 양산 단계에서 화면별 배포일자가 갈릴 때 유용</span></label>
+        <div id="gBatchCountF" style="display:none;margin-top:8px;max-width:200px">
+          <label style="font-size:12px;color:var(--sub);margin-bottom:4px;display:block">차수 개수</label>
+          <input type="number" id="gBatchCount" min="2" max="12" step="1" value="4">
+        </div>
+        <div class="gnote" id="gBatchOpsWarn" style="display:none;margin-top:6px">"운영·개선(스프린트 반복)" 유형은 이미 스프린트 단위로 화면이 나뉘어 있어 이 옵션을 적용하지 않습니다</div>
+      </div>
       <div class="field"><label>포함 범위</label>
         <div class="gchk">
           <label><input type="checkbox" id="gcResearch" checked><span>리서치 · 사용성 검증</span></label>
@@ -2658,7 +2665,7 @@ web:{label:'웹 · 포털 구축/리뉴얼',desc:'준비·기획 → UX → UI �
     gt('프론트 기능개발','4','FE',14,'dev',1),gt('상태관리·유효성','4','FE',5,'dev'),
     gt('데이터 모델·DB 설계','5','BE',5,'dev'),gt('API 개발(CRUD)','5','BE',12,'dev',1),gt('인증·권한','5','BE',5,'dev'),
     gt('FE/BE 통합','6','FE/BE',5),gt('통합 QA·버그픽스','6','QA',8,'',1),gt('UAT(사용자 검수)','6','기획/QA',4),
-    gt('배포 준비·릴리즈','7','BE',3),gt('오픈 & 안정화 모니터링','7','전체',4,'stab')]},
+    gt('배포 준비·릴리즈','7','BE',3,'',1),gt('오픈 & 안정화 모니터링','7','전체',4,'stab')]},
 
 app:{label:'모바일 앱 (iOS · AOS)',desc:'기획 → UX → UI → 앱 개발(iOS/AOS 병렬) → 서버·API → 통합·QA → 스토어 배포',
   phases:[{id:'1',name:'준비·기획',color:'#6b7280'},{id:'2',name:'UX 설계',color:'#0ea5e9'},{id:'3',name:'UI 디자인',color:'#8b5cf6'},
@@ -2677,7 +2684,7 @@ app:{label:'모바일 앱 (iOS · AOS)',desc:'기획 → UX → UI → 앱 개�
     gt('네이티브 기능(푸시·권한·딥링크)','4','iOS',5,'dev'),
     gt('데이터 모델·DB 설계','5','BE',5,'dev'),gt('API 개발','5','BE',12,'dev',1),gt('인증·소셜 로그인','5','BE',5,'dev'),
     gt('앱/서버 통합','6','FE/BE',5),gt('통합 QA·디바이스 테스트','6','QA',9,'',1),gt('UAT(사용자 검수)','6','기획/QA',4),
-    gt('스토어 등록·심사 제출','7','기획/PM',3),gt('오픈 & 안정화 모니터링','7','전체',4,'stab')]},
+    gt('스토어 등록·심사 제출','7','기획/PM',3,'',1),gt('오픈 & 안정화 모니터링','7','전체',4,'stab')]},
 
 research:{label:'UX 리서치 · 컨설팅',desc:'착수·설계 → 조사 실행 → 분석·인사이트 → 전략·제언 → 산출물·보고',
   phases:[{id:'1',name:'착수·설계',color:'#6b7280'},{id:'2',name:'조사 실행',color:'#0ea5e9'},{id:'3',name:'분석·인사이트',color:'#8b5cf6'},
@@ -2915,7 +2922,7 @@ function gWdCount(a,b){const hol=gHolSet();let x=D(a),e=D(b),c=0,g=0;
   while(x<=e&&g<4000){if(gIsWork(x,hol))c++;x=addDays(x,1);g++;}return c;}
 
 // ---- 코어: 공수 배분 → 기간 → 의존관계 ----
-function gLayout(tpl,scope,totalMD,par,extras){
+function gLayout(tpl,scope,totalMD,par,extras,batchN){
   const sf=Math.max(.4,Math.min(3,(scope.screens||20)/20));
   const qaMul=scope.qa==='간이'?.6:(scope.qa==='강화'?1.6:1);
   const base=tpl.tasks.filter(t=>!t.need||scope[t.need]);
@@ -2935,31 +2942,45 @@ function gLayout(tpl,scope,totalMD,par,extras){
     else if(md[i]>1){md[i]--;diff++;}
     gi++;
   }
-  // 단계별 → 역할별 체인. 체인 안은 순차, 단계 사이에는 배리어(선행 단계 전체 완료).
+  // 화면 배치 분할: sc:true 태스크(디자인·퍼블리싱·개발·QA·배포)를 N차수로 쪼갠다. 공수 합은 그대로 보존.
+  const bn=Math.max(0,Math.min(parseInt(batchN,10)||0,Math.max(1,scope.screens||1)));
+  const expanded=[];
+  list.forEach((t,i)=>{
+    if(bn>=2&&t.sc){
+      const b0=Math.floor(md[i]/bn),rem=md[i]-b0*bn;
+      for(let k=0;k<bn;k++)expanded.push({t:Object.assign({},t,{n:t.n+' ('+(k+1)+'/'+bn+'차수)'}),md:Math.max(1,b0+(k<rem?1:0)),batchIdx:k});
+    } else expanded.push({t:t,md:md[i],batchIdx:null});
+  });
+  // 단계별 → 역할별 체인. 체인 안은 순차. 단계 사이는 원칙적으로 배리어(선행 단계 전체 완료)지만,
+  // 어떤 차수의 태스크가 새 단계 체인의 첫 태스크일 때는 '같은 차수'끼리만 이어(파이프라인) 겹쳐 흐르게 한다.
   const byPh={},phOrder=[];
-  list.forEach((t,i)=>{ if(!byPh[t.p]){byPh[t.p]=[];phOrder.push(t.p);} byPh[t.p].push({t:t,md:md[i]}); });
+  expanded.forEach(x=>{ if(!byPh[x.t.p]){byPh[x.t.p]=[];phOrder.push(x.t.p);} byPh[x.t.p].push(x); });
   const pIdx=id=>{const k=tpl.phases.findIndex(p=>p.id===id);return k<0?999:k;};
   phOrder.sort((a,b)=>pIdx(a)-pIdx(b));
-  const out=[]; let prevLast=[],cpWd=0;
+  const out=[]; let prevLast=[],cpWd=0,prevBatch={};
   phOrder.forEach(pid=>{
     const chains={},corder=[];
     byPh[pid].forEach(x=>{ if(!chains[x.t.r]){chains[x.t.r]=[];corder.push(x.t.r);} chains[x.t.r].push(x); });
-    const lasts=[]; let phDur=0,seq=0;
+    const lasts=[]; let phDur=0,seq=0; const curBatch={};
     corder.forEach(r=>{
       let prevId=null,cd=0,np=Math.max(1,par[r]||1);
       chains[r].forEach(x=>{
         seq++; const id=pid+'.'+seq;
         const dur=Math.max(1,Math.ceil(x.md/np));
-        out.push({id:id,name:x.t.n,phase:pid,role:r,md:x.md,dur:dur,
-          deps:prevId?[prevId]:prevLast.slice(),status:'예정',assignees:[]});
+        let deps;
+        if(prevId)deps=[prevId];
+        else if(bn>=2&&x.batchIdx!=null&&prevBatch[x.batchIdx]&&prevBatch[x.batchIdx].length)deps=prevBatch[x.batchIdx].slice();
+        else deps=prevLast.slice();
+        out.push({id:id,name:x.t.n,phase:pid,role:r,md:x.md,dur:dur,deps:deps,status:'예정',assignees:[]});
+        if(bn>=2&&x.batchIdx!=null)(curBatch[x.batchIdx]=curBatch[x.batchIdx]||[]).push(id);
         prevId=id; cd+=dur;
       });
       lasts.push(prevId); if(cd>phDur)phDur=cd;
     });
-    cpWd+=phDur; prevLast=lasts.filter(Boolean);
+    cpWd+=phDur; prevLast=lasts.filter(Boolean); prevBatch=curBatch;
   });
   const mdRole={}; out.forEach(t=>{mdRole[t.role]=(mdRole[t.role]||0)+t.md;});
-  return {tasks:out,cpWd:cpWd,totalMD:out.reduce((a,t)=>a+t.md,0),mdRole:mdRole};
+  return {tasks:out,cpWd:cpWd,totalMD:out.reduce((a,t)=>a+t.md,0),mdRole:mdRole,batch:bn>=2?bn:0};
 }
 
 // 임계경로를 가장 길게 만드는 역할(= 증원 1순위)
@@ -3004,10 +3025,10 @@ function gSolve(cfg){
 
   if(cfg.mode==='A'){                    // 기간 + 공수 → 필요 인원
     const par={}; tpl.roles.forEach(r=>par[r]=1);
-    let r=gLayout(tpl,cfg.scope,cfg.md,par,ex),it=0;
+    let r=gLayout(tpl,cfg.scope,cfg.md,par,ex,cfg.batch),it=0;
     while(r&&r.cpWd>wdAvail&&it<200){
       const b=gBottleneck(r); if(!b||(par[b]||1)>=10)break;
-      par[b]=(par[b]||1)+1; r=gLayout(tpl,cfg.scope,cfg.md,par,ex); it++;
+      par[b]=(par[b]||1)+1; r=gLayout(tpl,cfg.scope,cfg.md,par,ex,cfg.batch); it++;
     }
     return gPack(tpl,cfg,r,par,wdAvail,startISO);
   }
@@ -3016,15 +3037,15 @@ function gSolve(cfg){
     for(let i=0;i<28&&lo<=hi;i++){
       const mid=Math.floor((lo+hi)/2);
       const p=gPar(tpl,cfg.scope,mid,cfg.people,ex);
-      const r=gLayout(tpl,cfg.scope,mid,p,ex);
+      const r=gLayout(tpl,cfg.scope,mid,p,ex,cfg.batch);
       if(r&&r.cpWd<=wdAvail){best=r;bp=p;lo=mid+1;} else hi=mid-1;
     }
-    if(!best){ bp=gPar(tpl,cfg.scope,lo,cfg.people,ex); best=gLayout(tpl,cfg.scope,Math.max(1,lo),bp,ex); }
+    if(!best){ bp=gPar(tpl,cfg.scope,lo,cfg.people,ex); best=gLayout(tpl,cfg.scope,Math.max(1,lo),bp,ex,cfg.batch); }
     return gPack(tpl,cfg,best,bp,wdAvail,startISO);
   }
   // C: 공수 + 인원 → 필요 기간
   const par=gPar(tpl,cfg.scope,cfg.md,cfg.people,ex);
-  const r=gLayout(tpl,cfg.scope,cfg.md,par,ex);
+  const r=gLayout(tpl,cfg.scope,cfg.md,par,ex,cfg.batch);
   return gPack(tpl,cfg,r,par,r?r.cpWd:1,startISO);
 }
 
@@ -3076,7 +3097,7 @@ function gPack(tpl,cfg,r,par,wdAvail,startISO){
   }
   if(!fixes.length)fixes.push({t:'참고',d:'생성 후 태스크별 공수·기간·의존관계를 편집 모드에서 조정할 수 있습니다'});
   return {tpl:tpl,mode:cfg.mode,tasks:r.tasks,cpWd:r.cpWd,totalMD:r.totalMD,mdRole:r.mdRole,
-    par:need,head:head,pool:pool,short:short,wdAvail:wdAvail,slack:slack,
+    par:need,head:head,pool:pool,short:short,wdAvail:wdAvail,slack:slack,batch:r.batch||0,
     start:startISO,open:openISO,buffer:cfg.buffer,verdict:verdict,msg:msg,fixes:fixes};
 }
 
@@ -3090,7 +3111,8 @@ function openGen(){
   document.getElementById('gTplBox').innerHTML=Object.keys(GTPL).map(k=>
     '<label><input type="radio" name="gtpl" value="'+k+'"'+(k===GTPLK?' checked':'')+'>'+
     '<span><b>'+esc(GTPL[k].label)+'</b><small>'+esc(GTPL[k].desc)+'</small></span></label>').join('');
-  document.querySelectorAll('input[name="gtpl"]').forEach(el=>el.onchange=function(){GTPLK=this.value;});
+  document.querySelectorAll('input[name="gtpl"]').forEach(el=>el.onchange=function(){GTPLK=this.value;gBatchTplUI();});
+  gBatchTplUI();
   const t=MODEL.settings.today||iso(new Date());
   document.getElementById('gStart').value=t;
   document.getElementById('gOpen').value=iso(addDays(D(t),84));
@@ -3117,6 +3139,12 @@ document.getElementById('gBackNpLink').onclick=()=>{
   if(role)document.getElementById('npRole').value=role;
   document.querySelector('input[name="npseed"][value="gen"]').checked=true;
 };
+function gBatchTplUI(){
+  const isOps=GTPLK==='ops', on=document.getElementById('gBatchOn');
+  if(isOps){on.checked=false;on.disabled=true;} else on.disabled=false;
+  document.getElementById('gBatchOpsWarn').style.display=isOps?'':'none';
+  document.getElementById('gBatchCountF').style.display=(!isOps&&on.checked)?'':'none';
+}
 function gModeUI(){
   document.querySelectorAll('#gModeSeg button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-gm')===GMODE));
   document.getElementById('gfOpen').style.display=GMODE==='C'?'none':'';
@@ -3144,11 +3172,13 @@ function gCfg(){
     stab:document.getElementById('gcStab').checked,
     qa:gv('gQa')};
   const picked=GEX.filter(e=>{const el=document.getElementById('gk_'+e.k);return el?el.checked:false;});
+  const batchOn=GTPLK!=='ops'&&document.getElementById('gBatchOn').checked;
+  const batch=batchOn?Math.max(2,Math.min(12,parseInt(gv('gBatchCount'),10)||4)):0;
   return {tpl:GTPLK,mode:GMODE,scope:scope,extras:picked,
     start:gv('gStart'),open:gv('gOpen'),
     buffer:Math.max(0,parseInt(gv('gBuf'),10)||0),
     md:Math.max(1,Math.round((parseFloat(gv('gMM'))||0)*(MODEL.settings.md_per_mm||20))),
-    people:Math.max(1,parseInt(gv('gPeople'),10)||1)};
+    people:Math.max(1,parseInt(gv('gPeople'),10)||1),batch:batch};
 }
 function gValidate1(){
   const e=document.getElementById('gErr1');e.textContent='';
@@ -3195,6 +3225,7 @@ function gRenderPreview(){
       '<div><span>가용 기간</span><b>'+R.wdAvail+' <em>근무일 (버퍼 '+R.buffer+' 제외)</em></b></div>'+
       '<div><span>여유</span><b style="color:'+(R.slack<0?'#c0392b':'#2f8f4a')+'">'+(R.slack>=0?'+':'')+R.slack+' <em>근무일</em></b></div>'+
     '</div>'+
+    (R.batch?'<div class="gnote" style="margin-top:8px">화면을 <b>'+R.batch+'차수</b>로 나눠 디자인·퍼블리싱·개발·QA·배포가 차수별로 겹쳐 흐르도록 구성했습니다 — 태스크명의 (n/'+R.batch+'차수) 표기를 확인하세요</div>':'')+
     '<div class="gvd '+R.verdict+'">'+esc(R.msg)+'</div>'+
     '<div class="gfix">'+R.fixes.map(f=>'<div class="r"><b>'+esc(f.t)+'</b><span>'+esc(f.d)+'</span></div>').join('')+'</div>'+
     '<div class="field"><label>역할별 투입</label><div class="gprev" style="max-height:170px"><table>'+
@@ -3257,6 +3288,7 @@ function gApplyNow(){
 document.getElementById('genBtn').onclick=()=>openGen();
 document.querySelectorAll('#gModeSeg button').forEach(b=>b.onclick=function(){GMODE=this.getAttribute('data-gm');gModeUI();});
 document.getElementById('gExtractBtn').onclick=()=>{GEX=gExtract(gv('gReq'));gRenderKeys();};
+document.getElementById('gBatchOn').onchange=gBatchTplUI;
 document.getElementById('gDocBtn').onclick=()=>document.getElementById('gDocFile').click();
 document.getElementById('gDocFile').onchange=async(e)=>{
   const f=e.target.files[0]; if(!f)return;
