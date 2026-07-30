@@ -1229,25 +1229,12 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
 
     <div class="gpane on" id="gPane1">
       <div class="field"><label>프로젝트 유형</label><div class="gcards" id="gTplBox"></div></div>
-      <div class="field"><label>산출 기준 — 아는 값 두 개를 넣으면 나머지 하나를 계산합니다</label>
-        <div class="gseg" id="gModeSeg">
-          <button type="button" data-gm="A" class="on">기간 + 공수 → <b>필요 인원</b></button>
-          <button type="button" data-gm="B">기간 + 인원 → <b>소화 공수</b></button>
-          <button type="button" data-gm="C">공수 + 인원 → <b>필요 기간</b></button>
-        </div></div>
       <div class="row3">
         <div class="field"><label>착수일</label><input id="gStart" type="date"></div>
         <div class="field" id="gfOpen"><label>목표 오픈일</label><input id="gOpen" type="date"></div>
         <div class="field"><label>버퍼 (근무일)</label><input id="gBuf" type="number" min="0" step="1" value="5"></div>
       </div>
-      <div class="row2">
-        <div class="field" id="gfMM"><label>총 공수 (M/M)</label><input id="gMM" type="number" min="0.5" step="0.5" value="6"></div>
-        <div class="field" id="gfPeople"><label>투입 인원 (명)</label><input id="gPeople" type="number" min="1" step="1" value="6"></div>
-      </div>
       <div class="err" id="gErr1"></div>
-    </div>
-
-    <div class="gpane" id="gPane2">
       <div class="row3">
         <div class="field"><label>화면 수 (개)</label><input id="gScreens" type="number" min="1" step="1" value="20"></div>
         <div class="field"><label>QA 강도</label><select id="gQa"><option>간이</option><option selected>표준</option><option>강화</option></select></div>
@@ -1294,6 +1281,18 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
         <div style="margin-top:8px"><button class="btn small" type="button" id="gExtractBtn"><svg class="icn s14"><use href="#i-sparkles"></use></svg> 요구사항에서 태스크 추천</button></div>
       </div>
       <div id="gKeyOut"></div>
+    </div>
+
+    <div class="gpane" id="gPane2">
+      <div class="field"><label>총 공수 (M/M) <span class="sublbl">화면 수·QA 강도·요구사항 기반으로 자동 계산됩니다 — 필요하면 직접 조정하세요</span></label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="gMM" type="number" min="0.5" step="0.5" value="6" style="max-width:140px">
+          <span class="gnote" id="gMMNote" style="margin:0">자동 계산값입니다</span>
+          <button class="btn small" type="button" id="gMMAuto">자동 계산값으로 되돌리기</button>
+        </div>
+      </div>
+      <div class="err" id="gErr2"></div>
+      <div id="gEffort"></div>
     </div>
 
     <div class="gpane" id="gPane3"><div id="gPreview"></div></div>
@@ -2968,8 +2967,7 @@ function gApplyDocText(text,fname){
   GEX=gExtract(box.value);gRenderKeys();
   const scan=gDocScan(text),filled=[];
   if(scan.screens){document.getElementById('gScreens').value=scan.screens;filled.push('화면 수 '+scan.screens+'개');}
-  if(scan.mm){document.getElementById('gMM').value=scan.mm;filled.push('공수 '+scan.mm+' M/M');}
-  if(scan.people){document.getElementById('gPeople').value=scan.people;filled.push('인원 '+scan.people+'명');}
+  if(scan.mm){document.getElementById('gMM').value=scan.mm;GMDTouched=true;filled.push('공수 '+scan.mm+' M/M(직접 명시된 값으로 반영 — 자동계산 대신 사용)');}
   if(scan.startDate){document.getElementById('gStart').value=scan.startDate;filled.push('착수일 '+scan.startDate);}
   if(scan.openDate){document.getElementById('gOpen').value=scan.openDate;filled.push('오픈일 '+scan.openDate);}
   else if(scan.months||scan.weeks){
@@ -3035,14 +3033,27 @@ function gWdCount(a,b){const hol=gHolSet();let x=D(a),e=D(b),c=0,g=0;
   while(x<=e&&g<4000){if(gIsWork(x,hol))c++;x=addDays(x,1);g++;}return c;}
 
 // ---- 코어: 공수 배분 → 기간 → 의존관계 ----
-function gLayout(tpl,scope,totalMD,par,extras,batchN){
+// 화면수·QA강도·요구사항(범위 체크로 걸러진 태스크 + 추천 확장 태스크)에 따른
+// 태스크별 상대 가중치를 계산한다 — gLayout(총공수 배분)과 gNaturalMD(총공수 자동추정)가 함께 쓴다.
+function gWeights(tpl,scope,extras){
   const sf=Math.max(.4,Math.min(3,(scope.screens||20)/20));
   const qaMul=scope.qa==='간이'?.6:(scope.qa==='강화'?1.6:1);
   const base=tpl.tasks.filter(t=>!t.need||scope[t.need]);
   const ex=(extras||[]).map(e=>({n:e.n,p:tpl.slot[e.s]||tpl.slot.plan,r:tpl.rmap[e.r]||tpl.roles[0],w:e.w,need:'',sc:false}));
   const list=base.concat(ex);
-  if(!list.length||totalMD<1)return null;
   const wt=list.map(t=>t.w*(t.sc?sf:1)*((t.r==='QA'||t.r==='기획/QA')?qaMul:1));
+  return {list:list,wt:wt};
+}
+// 총공수를 몰라도, 템플릿 태스크의 기본 공수(w)를 화면수·QA강도로 스케일링해
+// "자연스러운" 총공수(MD)를 역산한다 — 사용자가 총공수를 직접 몰라도 자동으로 채워준다.
+function gNaturalMD(tpl,scope,extras){
+  const {wt}=gWeights(tpl,scope,extras);
+  const sum=wt.reduce((a,b)=>a+b,0);
+  return Math.max(1,Math.round(sum));
+}
+function gLayout(tpl,scope,totalMD,par,extras,batchN){
+  const {list,wt}=gWeights(tpl,scope,extras);
+  if(!list.length||totalMD<1)return null;
   const sum=wt.reduce((a,b)=>a+b,0)||1;
   const md=wt.map(w=>Math.max(1,Math.round(totalMD*w/sum)));
   // 반올림 잔차는 공수가 큰 태스크부터 흡수시킨다
@@ -3215,11 +3226,11 @@ function gPack(tpl,cfg,r,par,wdAvail,startISO){
 }
 
 /* ---------------- 생성 모달 ---------------- */
-let GSTEP=1,GRES=null,GEX=[],GTPLK='web',GMODE='A',GNP=null;
-const GTITLE=['','일정 자동 생성 · 1/3 유형과 기준','일정 자동 생성 · 2/3 범위와 요구사항','일정 자동 생성 · 3/3 미리보기와 진단'];
+let GSTEP=1,GRES=null,GEX=[],GTPLK='web',GMODE='A',GNP=null,GMDTouched=false,GSTAFF=null;
+const GTITLE=['','일정 자동 생성 · 1/3 유형·기간·범위','일정 자동 생성 · 2/3 공수산정과 인력','일정 자동 생성 · 3/3 태스크와 적용'];
 
 function openGen(){
-  GSTEP=1;GRES=null;GEX=[];GNP=null;
+  GSTEP=1;GRES=null;GEX=[];GNP=null;GMDTouched=false;GSTAFF=null;
   document.getElementById('gBackNp').style.display='none';
   document.getElementById('gTplBox').innerHTML=Object.keys(GTPL).map(k=>
     '<label><input type="radio" name="gtpl" value="'+k+'"'+(k===GTPLK?' checked':'')+'>'+
@@ -3231,9 +3242,13 @@ function openGen(){
   document.getElementById('gOpen').value=iso(addDays(D(t),84));
   document.getElementById('gBuf').value=MODEL.settings.buffer_wd;
   document.getElementById('gErr1').textContent='';
+  document.getElementById('gErr2').textContent='';
   document.getElementById('gKeyOut').innerHTML='';
   document.getElementById('gReq').value='';
-  gModeUI();gStepUI();
+  document.getElementById('gEffort').innerHTML='';
+  document.getElementById('gMM').value='6';
+  document.getElementById('gMMNote').textContent='자동 계산값입니다';
+  gStepUI();
   document.getElementById('genOverlay').classList.add('on');
 }
 // 새 프로젝트 만들기 모달의 '요구사항 기반 자동 생성'에서 진입 — 이름·기준일·버퍼·내 역할을 이어받는다
@@ -3258,12 +3273,6 @@ function gBatchTplUI(){
   document.getElementById('gBatchOpsWarn').style.display=isOps?'':'none';
   document.getElementById('gBatchCountF').style.display=(!isOps&&on.checked)?'':'none';
 }
-function gModeUI(){
-  document.querySelectorAll('#gModeSeg button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-gm')===GMODE));
-  document.getElementById('gfOpen').style.display=GMODE==='C'?'none':'';
-  document.getElementById('gfMM').style.display=GMODE==='B'?'none':'';
-  document.getElementById('gfPeople').style.display=GMODE==='A'?'none':'';
-}
 function gStepUI(){
   for(let i=1;i<=3;i++)document.getElementById('gPane'+i).classList.toggle('on',i===GSTEP);
   document.querySelectorAll('.gsteps i').forEach((el,i)=>el.classList.toggle('on',i<GSTEP));
@@ -3271,9 +3280,10 @@ function gStepUI(){
   document.getElementById('gPrev').style.display=GSTEP>1?'':'none';
   document.getElementById('gNext').style.display=GSTEP<3?'':'none';
   document.getElementById('gApply').style.display=GSTEP===3?'':'none';
-  document.getElementById('gHint').textContent = GSTEP===3
-    ? '규칙 기반 추정치입니다 — 생성 후 편집할 수 있습니다'
-    : (GSTEP===2?'체크한 범위만 태스크로 만들어집니다':'아는 값 두 개만 넣으면 나머지 하나를 계산합니다');
+  document.getElementById('gHint').textContent = GSTEP===1
+    ? '체크한 범위만 태스크로 만들어집니다'
+    : (GSTEP===2?'총 공수는 자동 계산되며 직접 조정할 수 있습니다 — 인력풀 추천은 참고용입니다'
+              :'규칙 기반 추정치입니다 — 생성 후 자유롭게 편집할 수 있습니다');
 }
 function gv(id){return document.getElementById(id).value;}
 function gCfg(){
@@ -3287,24 +3297,38 @@ function gCfg(){
   const picked=GEX.filter(e=>{const el=document.getElementById('gk_'+e.k);return el?el.checked:false;});
   const batchOn=GTPLK!=='ops'&&document.getElementById('gBatchOn').checked;
   const batch=batchOn?Math.max(2,Math.min(12,parseInt(gv('gBatchCount'),10)||4)):0;
-  return {tpl:GTPLK,mode:GMODE,scope:scope,extras:picked,
+  return {tpl:GTPLK,mode:'A',scope:scope,extras:picked,
     start:gv('gStart'),open:gv('gOpen'),
     buffer:Math.max(0,parseInt(gv('gBuf'),10)||0),
     md:Math.max(1,Math.round((parseFloat(gv('gMM'))||0)*(MODEL.settings.md_per_mm||20))),
-    people:Math.max(1,parseInt(gv('gPeople'),10)||1),batch:batch};
+    batch:batch};
+}
+// 화면수·QA강도·범위체크·요구사항 추천 반영분을 하나의 scope 객체로 만든다 (자동 총공수 추정에도 재사용)
+function gScopeFromUI(){
+  return {screens:Math.max(1,parseInt(gv('gScreens'),10)||20),
+    research:document.getElementById('gcResearch').checked,
+    gui:document.getElementById('gcGui').checked,
+    pub:document.getElementById('gcPub').checked,
+    dev:document.getElementById('gcDev').checked,
+    stab:document.getElementById('gcStab').checked,
+    qa:gv('gQa')};
+}
+function gPickedExtras(){
+  return GEX.filter(e=>{const el=document.getElementById('gk_'+e.k);return el?el.checked:false;});
 }
 function gValidate1(){
   const e=document.getElementById('gErr1');e.textContent='';
   const st=gv('gStart'); if(!st){e.textContent='착수일을 입력하세요';return false;}
-  if(GMODE!=='C'){
-    const op=gv('gOpen');
-    if(!op){e.textContent='목표 오픈일을 입력하세요';return false;}
-    if(D(op)<=D(st)){e.textContent='오픈일은 착수일보다 뒤여야 합니다';return false;}
-    const wd=gWdCount(st,op)-Math.max(0,parseInt(gv('gBuf'),10)||0);
-    if(wd<1){e.textContent='버퍼를 빼면 남는 근무일이 없습니다 — 기간이나 버퍼를 조정하세요';return false;}
-  }
-  if(GMODE!=='B'&&!(parseFloat(gv('gMM'))>0)){e.textContent='총 공수(M/M)를 입력하세요';return false;}
-  if(GMODE!=='A'&&!(parseInt(gv('gPeople'),10)>0)){e.textContent='투입 인원을 입력하세요';return false;}
+  const op=gv('gOpen');
+  if(!op){e.textContent='목표 오픈일을 입력하세요';return false;}
+  if(D(op)<=D(st)){e.textContent='오픈일은 착수일보다 뒤여야 합니다';return false;}
+  const wd=gWdCount(st,op)-Math.max(0,parseInt(gv('gBuf'),10)||0);
+  if(wd<1){e.textContent='버퍼를 빼면 남는 근무일이 없습니다 — 기간이나 버퍼를 조정하세요';return false;}
+  return true;
+}
+function gValidate2(){
+  const e=document.getElementById('gErr2');e.textContent='';
+  if(!(parseFloat(gv('gMM'))>0)){e.textContent='총 공수(M/M)를 입력하세요';return false;}
   return true;
 }
 function gRenderKeys(){
@@ -3316,19 +3340,81 @@ function gRenderKeys(){
       '<label><input type="checkbox" id="gk_'+e.k+'" checked><span>'+esc(e.n)+'</span><span class="tg">'+esc(e.l)+'</span></label>'
     ).join('')).join('')+'</div>';
 }
-function gRenderPreview(){
-  const el=document.getElementById('gPreview'),R=GRES;
+/* ============================================================
+   자동 인력 추천 (마법사 2단계 내장) — 기존 '투입인력 추천'(stfScore 등)과
+   같은 적합도 채점 엔진을 재사용한다. 아직 프로젝트가 존재하지 않으므로
+   역할별 가용 기간은 R.start~R.open 전체 구간으로 단순화하고(舊 stfRoleWin
+   미계산시 폴백과 동일한 방식), 요구 역량은 비워둔 채 역할·이력·가용성
+   위주로 점수를 매긴다. 세부 재배정은 생성 후 '투입인력 추천'에서 계속 조정할 수 있다.
+   ============================================================ */
+function gStaffRecommend(R){
+  const dom=(MODEL.staff&&MODEL.staff.domain)||'';
+  const win={from:R.start,to:R.open};
+  const busy=stfBusy(null);
+  const pool=(WS.pool||[]);
+  const roles=Object.keys(R.par).filter(r=>r!=='전체'&&(R.par[r]||0)>0);
+  const cand={};
+  roles.forEach(r=>{ cand[r]=pool.map(p=>stfScore(p,r,[],dom,win,busy[p.name]||[])).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name)); });
+  const slots=[];
+  roles.forEach(r=>{for(let i=0;i<(R.par[r]||1);i++)slots.push({role:r,pick:null});});
+  const pairs=[];
+  roles.forEach(r=>cand[r].forEach(x=>pairs.push({role:r,c:x})));
+  pairs.sort((a,b)=>b.c.total-a.c.total||a.c.name.localeCompare(b.c.name));
+  const used={};
+  pairs.forEach(pr=>{
+    if(used[pr.c.name])return;
+    const sl=slots.find(x=>x.role===pr.role&&!x.pick); if(!sl)return;
+    sl.pick=pr.c; used[pr.c.name]=1;
+  });
+  return {roles:roles,cand:cand,slots:slots,win:win};
+}
+function gStaffRenderHTML(rec){
+  if(!rec||!rec.slots.length)return '<div class="gnote">역할별 필요 인원이 없어 추천을 생략합니다</div>';
+  const filled=rec.slots.filter(x=>x.pick).length;
+  let h='';
+  if(!(WS.pool||[]).length)
+    h+='<div class="gvd bad">인력풀이 비어 있습니다 — 인력풀 관리에서 인력을 먼저 등록하면 이름까지 추천해 드려요</div>';
+  else if(filled<rec.slots.length)
+    h+='<div class="gvd warn">'+(rec.slots.length-filled)+'개 슬롯을 채울 인력이 부족합니다 — 인력풀 인원을 늘리거나 필요 인원을 조정하세요</div>';
+  else
+    h+='<div class="gvd ok">필요 인원 '+rec.slots.length+'명 모두 인력풀에서 추천했습니다</div>';
+  h+='<div class="gprev" style="max-height:220px"><table><thead><tr><th>역할</th><th>추천 인력</th><th>적합도</th><th>참고</th></tr></thead><tbody>';
+  rec.slots.forEach(sl=>{
+    const p=sl.pick;
+    const warns=[];
+    if(p){
+      if(p.b.conf.length)warns.push('기간 충돌 '+Math.round(p.b.ovr*100)+'%');
+      if(p.alloc<100)warns.push('투입률 '+p.alloc+'%');
+    }
+    h+='<tr><td>'+esc(sl.role)+'</td><td>'+(p?esc(p.name)+(p.org?' <span class="sublbl">'+esc(p.org)+'</span>':''):'<span class="sublbl">후보 없음</span>')+'</td>'+
+      '<td class="mono">'+(p?p.total:'—')+'</td><td class="sublbl">'+(warns.join(' · ')||'—')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<label class="stfopt"><input type="checkbox" id="gStaffAsgChk" checked><span>생성 시 위 추천 인력을 담당자 없는 작업에 역할별로 자동 배정</span></label>';
+  h+='<div class="gnote" style="margin-top:6px">더 세밀한 대안 후보 비교·재배정은 프로젝트 생성 후 <b>투입인력 추천</b> 메뉴에서 계속할 수 있습니다</div>';
+  return h;
+}
+/* ---- 2단계: 공수산정 + 역할별 투입 + 자동 인력 추천 ---- */
+function gRunStep2(){
+  const tpl=GTPL[GTPLK];
+  if(tpl&&!GMDTouched){
+    const md=gNaturalMD(tpl,gScopeFromUI(),gPickedExtras());
+    document.getElementById('gMM').value=Math.round(md/(MODEL.settings.md_per_mm||20)*10)/10;
+    document.getElementById('gMMNote').textContent='자동 계산값입니다';
+  }else{
+    document.getElementById('gMMNote').textContent='직접 입력한 값입니다';
+  }
+  const cfg=gCfg();
+  GRES=gSolve(cfg);
+  GSTAFF=GRES?gStaffRecommend(GRES):null;
+  gRenderStep2();
+}
+function gRenderStep2(){
+  const el=document.getElementById('gEffort'),R=GRES;
   if(!R){el.innerHTML='<div class="gnote">생성 결과를 만들지 못했습니다 — 범위 체크를 확인해 주세요</div>';return;}
   const mpm=MODEL.settings.md_per_mm||20;
   const mm=Math.round(R.totalMD/mpm*10)/10;
-  const phn={};R.tpl.phases.forEach(p=>phn[p.id]=p.name);
   const roles=Object.keys(R.mdRole).sort((a,b)=>R.mdRole[b]-R.mdRole[a]);
-  let rows='',cur='';
-  R.tasks.forEach(t=>{
-    if(t.phase!==cur){cur=t.phase;rows+='<tr class="phr"><td colspan="4">'+esc(phn[cur]||cur)+'</td></tr>';}
-    rows+='<tr><td class="mono">'+esc(t.id)+'</td><td class="nm">'+esc(t.name)+'</td><td>'+esc(t.role)+
-      '</td><td class="mono">'+t.md+' MD · '+t.dur+'일</td></tr>';
-  });
   el.innerHTML=
     '<div class="gsum">'+
       '<div><span>착수 → 오픈</span><b style="font-size:12.5px">'+esc(R.start)+'<br>→ '+esc(R.open)+'</b></div>'+
@@ -3338,15 +3424,34 @@ function gRenderPreview(){
       '<div><span>가용 기간</span><b>'+R.wdAvail+' <em>근무일 (버퍼 '+R.buffer+' 제외)</em></b></div>'+
       '<div><span>여유</span><b style="color:'+(R.slack<0?'#c0392b':'#2f8f4a')+'">'+(R.slack>=0?'+':'')+R.slack+' <em>근무일</em></b></div>'+
     '</div>'+
-    (R.batch?'<div class="gnote" style="margin-top:8px">화면을 <b>'+R.batch+'차수</b>로 나눠 디자인·퍼블리싱·개발·QA·배포가 차수별로 겹쳐 흐르도록 구성했습니다 — 태스크명의 (n/'+R.batch+'차수) 표기를 확인하세요</div>':'')+
+    (R.batch?'<div class="gnote" style="margin-top:8px">화면을 <b>'+R.batch+'차수</b>로 나눠 디자인·퍼블리싱·개발·QA·배포가 차수별로 겹쳐 흐르도록 구성했습니다</div>':'')+
     '<div class="gvd '+R.verdict+'">'+esc(R.msg)+'</div>'+
     '<div class="gfix">'+R.fixes.map(f=>'<div class="r"><b>'+esc(f.t)+'</b><span>'+esc(f.d)+'</span></div>').join('')+'</div>'+
-    '<div class="field"><label>역할별 투입</label><div class="gprev" style="max-height:170px"><table>'+
+    '<div class="field"><label>역할별 투입 필요 인력</label><div class="gprev" style="max-height:170px"><table>'+
       '<thead><tr><th>역할</th><th>인원</th><th>공수</th><th>인력풀 보유(투입률 반영)</th></tr></thead><tbody>'+
       roles.map(r=>'<tr><td>'+esc(r)+'</td><td class="mono">'+(R.par[r]||1)+' 명</td><td class="mono">'+R.mdRole[r]+' MD</td>'+
         '<td class="mono"'+(((R.pool[r]||0)<(R.par[r]||1))?' style="color:#c0392b;font-weight:700"':'')+'>'+
         (Math.round((R.pool[r]||0)*10)/10)+' 명</td></tr>').join('')+
     '</tbody></table></div></div>'+
+    '<div class="field"><label>인력풀 · 자동 인력 추천</label>'+gStaffRenderHTML(GSTAFF)+'</div>';
+}
+/* ---- 3단계: 생성될 태스크 + 반영방식 + 프로젝트명 ---- */
+function gRunStep3(){
+  const cfg=gCfg();
+  GRES=gSolve(cfg);
+  gRenderTasksApply();
+}
+function gRenderTasksApply(){
+  const el=document.getElementById('gPreview'),R=GRES;
+  if(!R){el.innerHTML='<div class="gnote">생성 결과를 만들지 못했습니다 — 이전 단계를 확인해 주세요</div>';return;}
+  const phn={};R.tpl.phases.forEach(p=>phn[p.id]=p.name);
+  let rows='',cur='';
+  R.tasks.forEach(t=>{
+    if(t.phase!==cur){cur=t.phase;rows+='<tr class="phr"><td colspan="4">'+esc(phn[cur]||cur)+'</td></tr>';}
+    rows+='<tr><td class="mono">'+esc(t.id)+'</td><td class="nm">'+esc(t.name)+'</td><td>'+esc(t.role)+
+      '</td><td class="mono">'+t.md+' MD · '+t.dur+'일</td></tr>';
+  });
+  el.innerHTML=
     '<div class="field"><label>생성될 태스크 '+R.tasks.length+'개</label><div class="gprev"><table>'+
       '<thead><tr><th>ID</th><th>태스크</th><th>역할</th><th>공수 · 기간</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
     (GNP
@@ -3363,10 +3468,29 @@ function gRenderPreview(){
     document.getElementById('gNewNameF').style.display=v==='over'?'none':'';};
   document.querySelectorAll('input[name="gapply"]').forEach(x=>x.onchange=upd); upd();
 }
-function gRun(){
-  const cfg=gCfg();
-  GRES=gSolve(cfg);
-  gRenderPreview();
+// 2단계에서 추천된 인력(GSTAFF)을 새로 생성된 태스크의 담당자로 채운다(체크박스가 켜져 있을 때만).
+// 역할당 추천 인원이 여럿이면 그 역할의 태스크들에 라운드로빈으로 고르게 분배한다.
+function gAssignStaff(proj){
+  if(!GSTAFF||!GSTAFF.slots.length)return 0;
+  const chk=document.getElementById('gStaffAsgChk');
+  if(!chk||!chk.checked)return 0;
+  proj.people=proj.people||[];
+  const byRole={};
+  GSTAFF.slots.forEach(sl=>{
+    if(!sl.pick)return;
+    if(proj.people.indexOf(sl.pick.name)<0)proj.people.push(sl.pick.name);
+    (byRole[sl.role]=byRole[sl.role]||[]).push(sl.pick.name);
+  });
+  let asg=0;
+  Object.keys(byRole).forEach(r=>{
+    const arr=byRole[r]; if(!arr.length)return; let k=0;
+    proj.tasks.forEach(t=>{
+      if(t.role!==r)return;
+      if((t.assignees||[]).length)return;
+      t.assignees=[arr[k%arr.length]]; k++; asg++;
+    });
+  });
+  return asg;
 }
 function gApplyNow(){
   if(!GRES){toast('생성 결과가 없습니다');return;}
@@ -3380,8 +3504,9 @@ function gApplyNow(){
     MODEL.settings.today=R.start;
     MODEL.settings.buffer_wd=R.buffer;
     roleFilter='';
+    const asg=gAssignStaff(MODEL);
     closeAll(); VIEW='project'; stampEdit(); render();
-    toast('현재 프로젝트 일정을 새로 생성했습니다 — 되돌리기로 복구할 수 있습니다');
+    toast('현재 프로젝트 일정을 새로 생성했습니다'+(asg?' · 인력 '+asg+'건 자동 배정':'')+' — 되돌리기로 복구할 수 있습니다');
     return;
   }
   const nm=(document.getElementById('gNewName').value||'').trim()||tpl.label;
@@ -3393,14 +3518,16 @@ function gApplyNow(){
   np.id='p'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
   np.settings.my_role=(GNP&&GNP.role&&MY_ROLES.indexOf(GNP.role)>=0)?GNP.role:'PM';
   np.settings.color=PCOL[WS.projects.length%PCOL.length];
+  const asg=gAssignStaff(np);
   WS.projects.push(np);
   GNP=null;
   closeAll(); switchProject(np.id);
-  toast('"'+nm+'" 프로젝트를 생성했습니다 ('+R.tasks.length+'개 태스크)');
+  toast('"'+nm+'" 프로젝트를 생성했습니다 ('+R.tasks.length+'개 태스크'+(asg?' · 인력 '+asg+'건 자동 배정':'')+')');
 }
 document.getElementById('genBtn').onclick=()=>openGen();
-document.querySelectorAll('#gModeSeg button').forEach(b=>b.onclick=function(){GMODE=this.getAttribute('data-gm');gModeUI();});
 document.getElementById('gExtractBtn').onclick=()=>{GEX=gExtract(gv('gReq'));gRenderKeys();};
+document.getElementById('gMM').addEventListener('change',()=>{GMDTouched=true;if(GSTEP===2)gRunStep2();});
+document.getElementById('gMMAuto').onclick=()=>{GMDTouched=false;if(GSTEP===2)gRunStep2();};
 document.getElementById('gBatchOn').onchange=gBatchTplUI;
 document.getElementById('gDocBtn').onclick=()=>document.getElementById('gDocFile').click();
 document.getElementById('gDocFile').onchange=async(e)=>{
@@ -3431,8 +3558,8 @@ document.getElementById('gUrlCountBtn').onclick=gCountUrls;
 function gBmlHint(){toast('이 버튼은 클릭하지 말고 브라우저 북마크바로 드래그해서 등록하세요 — 이후 화면 수를 세고 싶은 사이트를 열고 그 북마크를 클릭하면 됩니다');}
 document.getElementById('gPrev').onclick=()=>{if(GSTEP>1){GSTEP--;gStepUI();}};
 document.getElementById('gNext').onclick=()=>{
-  if(GSTEP===1){ if(!gValidate1())return; GSTEP=2; gStepUI(); return; }
-  if(GSTEP===2){ GSTEP=3; gStepUI(); gRun(); }
+  if(GSTEP===1){ if(!gValidate1())return; GSTEP=2; gStepUI(); gRunStep2(); return; }
+  if(GSTEP===2){ if(!gValidate2())return; GSTEP=3; gStepUI(); gRunStep3(); }
 };
 document.getElementById('gApply').onclick=()=>gApplyNow();
 
