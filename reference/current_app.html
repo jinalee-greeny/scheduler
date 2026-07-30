@@ -1236,9 +1236,9 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
       </div>
       <div class="err" id="gErr1"></div>
       <div class="row3">
-        <div class="field"><label>화면 수 (개)</label><input id="gScreens" type="number" min="1" step="1" value="20"></div>
+        <div class="field"><label>화면 수 (개)</label><input id="gScreens" type="number" min="1" step="1" value="20" oninput="gUpdateScreensNote()"></div>
         <div class="field"><label>QA 강도</label><select id="gQa"><option>간이</option><option selected>표준</option><option>강화</option></select></div>
-        <div class="field"><label>공수 배분 기준</label><div class="gnote">화면 수가 20개에서 멀어질수록 설계·디자인·개발 태스크의 공수 비중이 함께 커지거나 줄어듭니다</div></div>
+        <div class="field"><label>공수 배분 기준</label><div class="gnote" id="gScreensScaleNote">화면 수가 20개에서 멀어질수록 설계·디자인·개발 태스크의 공수 비중이 함께 커지거나 줄어듭니다</div></div>
       </div>
       <div class="field"><label>화면 수 자동 세기 (선택) <span class="sublbl">기존 사이트 개선 과제에 유용 — sitemap.xml URL 또는 화면 URL 목록</span></label>
         <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -1254,6 +1254,7 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
           <button class="btn small" type="button" id="gUrlCountBtn"><svg class="icn s14"><use href="#i-sparkles"></use></svg> 붙여넣은 목록에서 화면 수 세기</button>
           <span class="gnote" style="margin:0">대부분의 사이트는 CORS 때문에 "가져오기 시도"가 막힙니다 — 위 <b>북마클릿</b>을 쓰면 막히지 않고, 북마클릿을 쓸 수 없다면 sitemap.xml을 새 탭에서 열어 내용을 복사해 붙여넣어 주세요</span>
         </div>
+        <div class="gnote" id="gUrlCountNote" style="margin-top:6px"></div>
       </div>
       <div class="field" id="gBatchField"><label><input type="checkbox" id="gBatchOn" style="width:auto;margin:0 4px 0 0;vertical-align:-2px"> 화면을 차수로 나눠 배포 <span class="sublbl">디자인·퍼블리싱·개발·QA·배포까지 차수별로 겹쳐 흐르는 일정으로 쪼갭니다 — 양산 단계에서 화면별 배포일자가 갈릴 때 유용</span></label>
         <div id="gBatchCountF" style="display:none;margin-top:8px;max-width:200px">
@@ -2966,7 +2967,7 @@ function gApplyDocText(text,fname){
   box.value=box.value.trim()?(box.value.trim()+'\n\n'+text):text;
   GEX=gExtract(box.value);gRenderKeys();
   const scan=gDocScan(text),filled=[];
-  if(scan.screens){document.getElementById('gScreens').value=scan.screens;filled.push('화면 수 '+scan.screens+'개');}
+  if(scan.screens){document.getElementById('gScreens').value=scan.screens;gUpdateScreensNote();filled.push('화면 수 '+scan.screens+'개');}
   if(scan.mm){document.getElementById('gMM').value=scan.mm;GMDTouched=true;filled.push('공수 '+scan.mm+' M/M(직접 명시된 값으로 반영 — 자동계산 대신 사용)');}
   if(scan.startDate){document.getElementById('gStart').value=scan.startDate;filled.push('착수일 '+scan.startDate);}
   if(scan.openDate){document.getElementById('gOpen').value=scan.openDate;filled.push('오픈일 '+scan.openDate);}
@@ -2993,11 +2994,65 @@ function gParseUrls(text){
   });
   return out;
 }
+// URL 하나를 "화면 템플릿" 단위로 정규화 — 경로 세그먼트 중 숫자·긴 해시 등 식별자로 보이는 부분을
+// :id로 치환해, 같은 디자인 템플릿을 재사용하는 페이지(예: 종목·상품 상세 화면 수천 개)를
+// 하나의 화면으로 묶어 센다. 순수 텍스트 경로(예: /about, /contact)는 그대로 유지되어 서로 다른
+// 화면으로 계속 구분된다.
+function gTemplateOf(url){
+  let origin='',path=String(url||'');
+  try{
+    const u=new URL(url);
+    origin=u.origin; path=u.pathname;
+  }catch(e){
+    const m=path.match(/^(https?:\/\/[^\/]+)(\/.*)?$/i);
+    if(m){origin=m[1];path=m[2]||'/';}
+  }
+  const segs=path.split('/').filter(Boolean).map(seg=>{
+    let dec=seg; try{dec=decodeURIComponent(seg);}catch(e){}
+    if(/\d/.test(dec))return ':id';
+    if(/^[0-9a-f]{8,}$/i.test(dec))return ':id';
+    return dec.toLowerCase();
+  });
+  return origin+'/'+segs.join('/');
+}
+function gUrlStats(list){
+  const seen={};let templated=0;
+  list.forEach(u=>{
+    const t=gTemplateOf(u);
+    if(!seen[t]){seen[t]=1;templated++;}
+  });
+  return {raw:list.length,templated:templated};
+}
+let GURLSTATS=null;
+function gRenderUrlCountNote(){
+  const note=document.getElementById('gUrlCountNote');
+  if(!note)return;
+  if(!GURLSTATS){note.innerHTML='';return;}
+  const s=GURLSTATS;
+  if(s.raw===s.templated){
+    note.innerHTML='화면 '+s.raw+'개 (원본·템플릿 동일)';
+    return;
+  }
+  const usingTpl=(document.getElementById('gScreens').value==String(s.templated));
+  note.innerHTML=
+    '원본 URL <b>'+s.raw+'개</b> · 템플릿(디자인 화면) 기준 <b>'+s.templated+'개</b>'+
+    (usingTpl
+      ? ' — 템플릿 수를 화면 수에 반영했습니다. <a href="javascript:void(0)" id="gUrlUseRaw" style="text-decoration:underline">원본 개수('+s.raw+'개)로 반영하기</a>'
+      : ' — 원본 수를 화면 수에 반영했습니다. <a href="javascript:void(0)" id="gUrlUseTpl" style="text-decoration:underline">템플릿 개수('+s.templated+'개)로 반영하기</a>');
+  const useRaw=document.getElementById('gUrlUseRaw');
+  if(useRaw)useRaw.onclick=()=>{document.getElementById('gScreens').value=s.raw;gUpdateScreensNote();gRenderUrlCountNote();toast('원본 URL 개수('+s.raw+'개)를 화면 수에 반영했습니다');};
+  const useTpl=document.getElementById('gUrlUseTpl');
+  if(useTpl)useTpl.onclick=()=>{document.getElementById('gScreens').value=s.templated;gUpdateScreensNote();gRenderUrlCountNote();toast('템플릿 기준 화면 수('+s.templated+'개)를 반영했습니다');};
+}
 function gCountUrls(){
   const list=gParseUrls(document.getElementById('gUrlList').value);
-  if(!list.length){toast('붙여넣은 내용에서 URL을 찾지 못했습니다');return;}
-  document.getElementById('gScreens').value=list.length;
-  toast('붙여넣은 목록에서 화면 '+list.length+'개를 찾아 반영했습니다');
+  if(!list.length){toast('붙여넣은 내용에서 URL을 찾지 못했습니다');GURLSTATS=null;gRenderUrlCountNote();return;}
+  GURLSTATS=gUrlStats(list);
+  document.getElementById('gScreens').value=GURLSTATS.templated;gUpdateScreensNote();
+  gRenderUrlCountNote();
+  toast(GURLSTATS.raw===GURLSTATS.templated
+    ? '붙여넣은 목록에서 화면 '+GURLSTATS.raw+'개를 찾아 반영했습니다'
+    : '붙여넣은 목록에서 URL '+GURLSTATS.raw+'개 중 템플릿 기준 고유 화면 '+GURLSTATS.templated+'개를 반영했습니다');
 }
 async function gFetchUrlList(){
   const url=(document.getElementById('gUrlFetch').value||'').trim();
@@ -3011,9 +3066,13 @@ async function gFetchUrlList(){
     const text=await res.text();
     document.getElementById('gUrlList').value=text;
     const list=gParseUrls(text);
-    if(!list.length){toast('가져왔지만 URL을 찾지 못했습니다 — sitemap 형식인지 확인해 주세요');return;}
-    document.getElementById('gScreens').value=list.length;
-    toast('URL에서 화면 '+list.length+'개를 찾아 반영했습니다');
+    if(!list.length){toast('가져왔지만 URL을 찾지 못했습니다 — sitemap 형식인지 확인해 주세요');GURLSTATS=null;gRenderUrlCountNote();return;}
+    GURLSTATS=gUrlStats(list);
+    document.getElementById('gScreens').value=GURLSTATS.templated;gUpdateScreensNote();
+    gRenderUrlCountNote();
+    toast(GURLSTATS.raw===GURLSTATS.templated
+      ? 'URL에서 화면 '+GURLSTATS.raw+'개를 찾아 반영했습니다'
+      : 'URL '+GURLSTATS.raw+'개 중 템플릿 기준 고유 화면 '+GURLSTATS.templated+'개를 반영했습니다');
   }catch(err){
     toast('이 사이트는 브라우저에서 직접 가져올 수 없습니다(CORS 등) — sitemap 내용을 복사해 아래 칸에 붙여넣어 주세요');
   }finally{
@@ -3036,13 +3095,37 @@ function gWdCount(a,b){const hol=gHolSet();let x=D(a),e=D(b),c=0,g=0;
 // 화면수·QA강도·요구사항(범위 체크로 걸러진 태스크 + 추천 확장 태스크)에 따른
 // 태스크별 상대 가중치를 계산한다 — gLayout(총공수 배분)과 gNaturalMD(총공수 자동추정)가 함께 쓴다.
 function gWeights(tpl,scope,extras){
-  const sf=Math.max(.4,Math.min(3,(scope.screens||20)/20));
+  const sf=gScaleFactor(scope.screens||20);
   const qaMul=scope.qa==='간이'?.6:(scope.qa==='강화'?1.6:1);
   const base=tpl.tasks.filter(t=>!t.need||scope[t.need]);
   const ex=(extras||[]).map(e=>({n:e.n,p:tpl.slot[e.s]||tpl.slot.plan,r:tpl.rmap[e.r]||tpl.roles[0],w:e.w,need:'',sc:false}));
   const list=base.concat(ex);
   const wt=list.map(t=>t.w*(t.sc?sf:1)*((t.r==='QA'||t.r==='기획/QA')?qaMul:1));
   return {list:list,wt:wt};
+}
+// 화면 수 → 공수 배율. 20개를 1배 기준으로, 60개(3배)까지는 선형으로 늘어난다.
+// 60개를 넘는 대규모 사이트(수백~수만 화면, 예: 종목 상세처럼 템플릿 하나를 대량 재사용하는 경우)는
+// 화면이 늘수록 컴포넌트·템플릿을 재사용해 화면당 한계 공수가 줄어드는 경향이 있으므로,
+// 계속 늘어나되 완만해지는 제곱근 곡선으로 확장한다(과거에는 3배에서 완전히 멈췄음).
+function gScaleFactor(scr){
+  scr=Math.max(1,scr);
+  let sf;
+  if(scr<=60){ sf=Math.max(.4,scr/20); }
+  else{ sf=3+Math.sqrt((scr-60)/20); }
+  return Math.min(200,sf); // 극단적인 입력값에 대한 안전장치
+}
+// 화면 수가 아주 많을 때, 자동 계산된 공수가 대략적 추정치임을 알리는 경고 문구(없으면 null)
+function gScaleWarnText(scr){
+  scr=parseInt(scr,10)||0;
+  if(scr<=200)return null;
+  return '화면 수가 매우 많습니다('+scr+'개) — 60개를 넘는 구간은 템플릿 재사용을 감안해 완만하게만 늘어나는 추정치입니다. 실제 콘텐츠 투입·QA 물량이 큰 프로젝트라면 총 공수(M/M) 값을 직접 검토해 조정해 주세요.';
+}
+function gUpdateScreensNote(){
+  const el=document.getElementById('gScreensScaleNote'); if(!el)return;
+  const base='화면 수가 20개에서 멀어질수록 설계·디자인·개발 태스크의 공수 비중이 함께 커지거나 줄어듭니다';
+  const scr=parseInt(document.getElementById('gScreens').value,10)||20;
+  const warn=gScaleWarnText(scr);
+  el.innerHTML=warn?(base+'<br><b style="color:#a15c00">'+esc(warn)+'</b>'):base;
 }
 // 총공수를 몰라도, 템플릿 태스크의 기본 공수(w)를 화면수·QA강도로 스케일링해
 // "자연스러운" 총공수(MD)를 역산한다 — 사용자가 총공수를 직접 몰라도 자동으로 채워준다.
@@ -3230,7 +3313,7 @@ let GSTEP=1,GRES=null,GEX=[],GTPLK='web',GMODE='A',GNP=null,GMDTouched=false,GST
 const GTITLE=['','일정 자동 생성 · 1/3 유형·기간·범위','일정 자동 생성 · 2/3 공수산정과 인력','일정 자동 생성 · 3/3 태스크와 적용'];
 
 function openGen(){
-  GSTEP=1;GRES=null;GEX=[];GNP=null;GMDTouched=false;GSTAFF=null;
+  GSTEP=1;GRES=null;GEX=[];GNP=null;GMDTouched=false;GSTAFF=null;GURLSTATS=null;
   document.getElementById('gBackNp').style.display='none';
   document.getElementById('gTplBox').innerHTML=Object.keys(GTPL).map(k=>
     '<label><input type="radio" name="gtpl" value="'+k+'"'+(k===GTPLK?' checked':'')+'>'+
@@ -3248,6 +3331,7 @@ function openGen(){
   document.getElementById('gEffort').innerHTML='';
   document.getElementById('gMM').value='6';
   document.getElementById('gMMNote').textContent='자동 계산값입니다';
+  gUpdateScreensNote();
   gStepUI();
   document.getElementById('genOverlay').classList.add('on');
 }
