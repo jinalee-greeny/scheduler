@@ -2756,7 +2756,7 @@ document.addEventListener('pointerup',e=>{
    따라서 생성기는 오픈일을 직접 쓰지 않고, 태스크의 md·dur·deps를 빚어
    임계경로 근무일수(cpWd)가 가용 근무일 안에 들어오도록 맞춘다.               */
 
-const gt=(n,p,r,w,need,sc)=>({n:n,p:p,r:r,w:w,need:need||'',sc:!!sc});
+const gt=(n,p,r,w,need,sc,dep)=>({n:n,p:p,r:r,w:w,need:need||'',sc:!!sc,dep:dep||''});
 
 // ---- 유형 템플릿 ----
 // w = 상대 공수 가중치, need = 범위 체크박스 게이트, sc = 화면 수에 비례
@@ -2772,8 +2772,9 @@ web:{label:'웹 · 포털 구축/리뉴얼',desc:'준비·기획 → UX → UI �
     gt('사용자 인터뷰·설문','1','UX',5,'research'),gt('요구사항 정의서·범위 확정','1','기획/PM',4),
     gt('IA & 유저플로우','2','UX',5,'',1),gt('화면설계(와이어프레임)','2','UX',10,'',1),
     gt('프로토타입·사용성 점검','2','UX',5,'research'),
-    gt('디자인 컨셉·무드','3','UI',3,'gui'),gt('디자인 시스템(컴포넌트·토큰)','3','UI',6,'gui'),
-    gt('본 화면 UI 디자인','3','UI',12,'gui',1),gt('디자인 QA·핸드오프','3','UI',3,'gui'),
+    gt('디자인 컨셉·무드','3','UI',3,'gui',0,'IA & 유저플로우'),gt('디자인 시스템(컴포넌트·토큰)','3','UI',6,'gui'),
+    gt('본 화면 UI 디자인','3','UI',12,'gui',1,'화면설계(와이어프레임)'),gt('컨셉·주요화면 보고','3','UI',2,'gui'),
+    gt('디자인 QA·핸드오프','3','UI',3,'gui'),
     gt('마크업·스타일 퍼블리싱','4','퍼블',10,'pub',1),
     gt('프론트 기능개발','4','FE',14,'dev',1),gt('상태관리·유효성','4','FE',5,'dev'),
     gt('데이터 모델·DB 설계','5','BE',5,'dev'),gt('API 개발(CRUD)','5','BE',12,'dev',1),gt('인증·권한','5','BE',5,'dev'),
@@ -2791,8 +2792,9 @@ app:{label:'모바일 앱 (iOS · AOS)',desc:'기획 → UX → UI → 앱 개�
     gt('사용자 인터뷰','1','UX',4,'research'),gt('기능 정의·서비스 정책서','1','기획/PM',4),
     gt('IA & 유저플로우','2','UX',5,'',1),gt('화면설계(와이어프레임)','2','UX',10,'',1),
     gt('프로토타입·사용성 점검','2','UX',5,'research'),
-    gt('디자인 컨셉·무드','3','UI',3,'gui'),gt('디자인 시스템·아이콘','3','UI',6,'gui'),
-    gt('본 화면 UI 디자인 (iOS·AOS)','3','UI',12,'gui',1),gt('디자인 QA·리소스 전달','3','UI',3,'gui'),
+    gt('디자인 컨셉·무드','3','UI',3,'gui',0,'IA & 유저플로우'),gt('디자인 시스템·아이콘','3','UI',6,'gui'),
+    gt('본 화면 UI 디자인 (iOS·AOS)','3','UI',12,'gui',1,'화면설계(와이어프레임)'),gt('컨셉·주요화면 보고','3','UI',2,'gui'),
+    gt('디자인 QA·리소스 전달','3','UI',3,'gui'),
     gt('iOS 화면 개발','4','iOS',12,'dev',1),gt('AOS 화면 개발','4','AOS',12,'dev',1),
     gt('네이티브 기능(푸시·권한·딥링크)','4','iOS',5,'dev'),
     gt('데이터 모델·DB 설계','5','BE',5,'dev'),gt('API 개발','5','BE',12,'dev',1),gt('인증·소셜 로그인','5','BE',5,'dev'),
@@ -3134,6 +3136,14 @@ function gNaturalMD(tpl,scope,extras){
   const sum=wt.reduce((a,b)=>a+b,0);
   return Math.max(1,Math.round(sum));
 }
+// 이미 배치된 태스크 목록(list)에서 이름이 정확히 일치하는 태스크의 id를 찾는다.
+// 배치(차수분할) 모드에서는 이름에 차수 접미사가 붙어 매칭되지 않을 수 있는데,
+// 이 경우 호출 측에서 자동으로 기존 배치 파이프라인 방식으로 폴백한다.
+function gFindTaskId(list,name){
+  if(!name)return null;
+  const t=list.find(x=>x.name===name);
+  return t?t.id:null;
+}
 function gLayout(tpl,scope,totalMD,par,extras,batchN){
   const {list,wt}=gWeights(tpl,scope,extras);
   if(!list.length||totalMD<1)return null;
@@ -3175,9 +3185,17 @@ function gLayout(tpl,scope,totalMD,par,extras,batchN){
         seq++; const id=pid+'.'+seq;
         const dur=Math.max(1,Math.ceil(x.md/np));
         let deps;
-        if(prevId)deps=[prevId];
-        else if(bn>=2&&x.batchIdx!=null&&prevBatch[x.batchIdx]&&prevBatch[x.batchIdx].length)deps=prevBatch[x.batchIdx].slice();
-        else deps=prevLast.slice();
+        if(prevId){
+          deps=[prevId];
+          if(x.t.dep){ const dId=gFindTaskId(out,x.t.dep); if(dId&&deps.indexOf(dId)<0)deps.push(dId); }
+        } else if(bn>=2&&x.batchIdx!=null&&prevBatch[x.batchIdx]&&prevBatch[x.batchIdx].length){
+          deps=prevBatch[x.batchIdx].slice();
+        } else if(x.t.dep){
+          const dId=gFindTaskId(out,x.t.dep);
+          deps = dId ? [dId] : prevLast.slice();
+        } else {
+          deps=prevLast.slice();
+        }
         out.push({id:id,name:x.t.n,phase:pid,role:r,md:x.md,dur:dur,deps:deps,status:'예정',assignees:[]});
         if(bn>=2&&x.batchIdx!=null)(curBatch[x.batchIdx]=curBatch[x.batchIdx]||[]).push(id);
         prevId=id; cd+=dur;
