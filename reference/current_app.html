@@ -1292,6 +1292,13 @@ body.view-home .apputil,body.view-pool .apputil{border-left:0;padding-left:0}
           <button class="btn small" type="button" id="gMMAuto">자동 계산값으로 되돌리기</button>
         </div>
       </div>
+      <div class="field"><label>계산 기준 <span class="sublbl">총 공수·기간·인력 중 무엇을 고정하고 무엇을 계산할지 정합니다</span></label>
+        <div class="npopt" id="gModeBox">
+          <label><input type="radio" name="gmode" value="A" checked><span><b>기간 기준</b><small>착수일~목표 오픈일 기간에 맞춰 필요 인력을 계산합니다</small></span></label>
+          <label><input type="radio" name="gmode" value="C"><span><b>인력 기준</b><small>투입 가능한 총 인력에 맞춰 필요 기간(오픈일)을 역산합니다</small></span></label>
+        </div>
+      </div>
+      <div class="field" id="gPeopleField" style="display:none"><label>총 투입 인력 (명) <span class="sublbl">역할별 공수 비중에 따라 자동 배분됩니다</span></label><input id="gPeople" type="number" min="1" step="1" value="8"></div>
       <div class="err" id="gErr2"></div>
       <div id="gEffort"></div>
     </div>
@@ -3393,6 +3400,9 @@ function openGen(){
   document.getElementById('gEffort').innerHTML='';
   document.getElementById('gMM').value='6';
   document.getElementById('gMMNote').textContent='자동 계산값입니다';
+  GMODE='A';
+  document.querySelectorAll('input[name="gmode"]').forEach(r=>r.checked=(r.value==='A'));
+  document.getElementById('gPeopleField').style.display='none';
   gAutoRecalc();
   gStepUI();
   document.getElementById('genOverlay').classList.add('on');
@@ -3444,11 +3454,14 @@ function gCfg(){
   const picked=GEX.filter(e=>{const el=document.getElementById('gk_'+e.k);return el?el.checked:false;});
   const batchOn=GTPLK!=='ops'&&document.getElementById('gBatchOn').checked;
   const batch=batchOn?Math.max(2,Math.min(12,parseInt(gv('gBatchCount'),10)||4)):0;
-  return {tpl:GTPLK,mode:'A',scope:scope,extras:picked,
+  const mode=GMODE==='C'?'C':'A';
+  const cfg={tpl:GTPLK,mode:mode,scope:scope,extras:picked,
     start:gv('gStart'),open:gv('gOpen'),
     buffer:Math.max(0,parseInt(gv('gBuf'),10)||0),
     md:Math.max(1,Math.round((parseFloat(gv('gMM'))||0)*(MODEL.settings.md_per_mm||20))),
     batch:batch};
+  if(mode==='C')cfg.people=Math.max(1,parseInt(gv('gPeople'),10)||1);
+  return cfg;
 }
 // 화면수·QA강도·범위체크·요구사항 추천 반영분을 하나의 scope 객체로 만든다 (자동 총공수 추정에도 재사용)
 function gScopeFromUI(){
@@ -3476,6 +3489,7 @@ function gValidate1(){
 function gValidate2(){
   const e=document.getElementById('gErr2');e.textContent='';
   if(!(parseFloat(gv('gMM'))>0)){e.textContent='총 공수(M/M)를 입력하세요';return false;}
+  if(GMODE==='C'&&!(parseInt(gv('gPeople'),10)>0)){e.textContent='총 투입 인력(명)을 입력하세요';return false;}
   return true;
 }
 function gRenderKeys(){
@@ -3562,14 +3576,17 @@ function gRenderStep2(){
   const mpm=MODEL.settings.md_per_mm||20;
   const mm=Math.round(R.totalMD/mpm*10)/10;
   const roles=Object.keys(R.mdRole).sort((a,b)=>R.mdRole[b]-R.mdRole[a]);
+  const totalPeople=Object.keys(R.par).filter(k=>k!=='전체').reduce((a,k)=>a+(R.par[k]||0),0);
+  const isPeopleMode=R.mode==='C';
   el.innerHTML=
     '<div class="gsum">'+
       '<div><span>착수 → 오픈</span><b style="font-size:12.5px">'+esc(R.start)+'<br>→ '+esc(R.open)+'</b></div>'+
       '<div><span>총 공수</span><b>'+mm+' <em>M/M · '+R.totalMD+' MD</em></b></div>'+
+      '<div><span>총 인력 합계</span><b>'+totalPeople+' <em>명 (역할별 필요인원 합)</em></b></div>'+
       '<div><span>최대 동시 인원</span><b>'+R.head+' <em>명 (단계 기준)</em></b></div>'+
       '<div><span>임계경로</span><b>'+R.cpWd+' <em>근무일</em></b></div>'+
-      '<div><span>가용 기간</span><b>'+R.wdAvail+' <em>근무일 (버퍼 '+R.buffer+' 제외)</em></b></div>'+
-      '<div><span>여유</span><b style="color:'+(R.slack<0?'#c0392b':'#2f8f4a')+'">'+(R.slack>=0?'+':'')+R.slack+' <em>근무일</em></b></div>'+
+      (isPeopleMode?'':'<div><span>가용 기간</span><b>'+R.wdAvail+' <em>근무일 (버퍼 '+R.buffer+' 제외)</em></b></div>')+
+      (isPeopleMode?'':'<div><span>여유</span><b style="color:'+(R.slack<0?'#c0392b':'#2f8f4a')+'">'+(R.slack>=0?'+':'')+R.slack+' <em>근무일</em></b></div>')+
     '</div>'+
     (R.batch?'<div class="gnote" style="margin-top:8px">화면을 <b>'+R.batch+'차수</b>로 나눠 디자인·퍼블리싱·개발·QA·배포가 차수별로 겹쳐 흐르도록 구성했습니다</div>':'')+
     '<div class="gvd '+R.verdict+'">'+esc(R.msg)+'</div>'+
@@ -3675,6 +3692,17 @@ document.getElementById('genBtn').onclick=()=>openGen();
 document.getElementById('gExtractBtn').onclick=()=>{GEX=gExtract(gv('gReq'));gRenderKeys();};
 document.getElementById('gMM').addEventListener('change',()=>{GMDTouched=true;if(GSTEP===2)gRunStep2();});
 document.getElementById('gMMAuto').onclick=()=>{GMDTouched=false;if(GSTEP===2)gRunStep2();};
+document.querySelectorAll('input[name="gmode"]').forEach(el=>el.onchange=function(){
+  GMODE=this.value;
+  document.getElementById('gPeopleField').style.display=GMODE==='C'?'':'none';
+  if(GMODE==='C'){
+    // 기간 기준으로 계산했던 직전 결과의 총 인력 합계를 새 기본값으로 제안한다(전환 전후 숫자가 튀지 않도록).
+    const sumNow=GRES?Object.keys(GRES.par).filter(k=>k!=='전체').reduce((a,k)=>a+(GRES.par[k]||0),0):8;
+    document.getElementById('gPeople').value=Math.max(1,sumNow);
+  }
+  if(GSTEP===2)gRunStep2();
+});
+document.getElementById('gPeople').addEventListener('input',()=>{if(GSTEP===2&&GMODE==='C')gRunStep2();});
 document.getElementById('gOpen').addEventListener('change',()=>{GOpenTouched=true;gRenderOpenNote();});
 document.getElementById('gOpenAuto').onclick=()=>{GOpenTouched=false;gRecalcDefaultOpen();};
 document.getElementById('gQa').addEventListener('change',gRecalcDefaultOpen);
