@@ -3248,14 +3248,38 @@ function gLayout(tpl,scope,totalMD,par,extras,batchN){
 }
 
 // 임계경로를 가장 길게 만드는 역할(= 증원 1순위)
-function gBottleneck(r){
-  if(!r)return null;
-  const ch={},ph={};
+// 역할별 조직 상한(OrgHardCap) 기본값 — 의사결정이 집중돼야 하는 역할(기획/PM 등)은 낮게,
+// 모듈·화면 단위로 쪼개기 쉬운 역할(FE/BE/QA 등)은 높게 잡는다. MODEL.settings.role_caps로
+// 프로젝트별 override 가능(예: {'기획/PM':2}) — 지정 없으면 아래 기본값, 그마저 없으면 10.
+const ROLE_CAP_DEFAULT={'기획/PM':3,'UX':4,'UI':6,'퍼블':8,'FE':8,'BE':8,'iOS':8,'AOS':8,'FE/BE':6,'QA':8,'기획/QA':4,'전체':3};
+function gRoleCap(role){
+  const custom=(MODEL.settings.role_caps||{})[role];
+  if(custom>0)return custom;
+  return ROLE_CAP_DEFAULT[role]||10;
+}
+// 쏠림 경고는 상한에 도달하기 한 걸음 전(상한-1)에 미리 뜨도록 한다(상한이 아주 작은 역할은 상한 자체에서).
+function gHeavyWarnAt(role){ return Math.max(2, gRoleCap(role)-1); }
+// 구조적 병렬 상한(TaskSplitCap): 그 '단계·역할'에 스케일 대상(sc=true) 태스크가 하나라도 있으면
+// 규모가 커질수록 나눠서 할 일도 자연히 늘어나므로 구조적 상한을 두지 않는다(조직 상한만 적용).
+// 전부 고정 크기(sc=false) 태스크뿐이면, 그 개수 자체가 동시에 나눠서 할 수 있는 일감의 물리적 한계다.
+function gTaskSplitCap(tpl,phase,role){
+  const ts=tpl.tasks.filter(t=>t.p===phase&&t.r===role);
+  if(!ts.length)return Infinity;
+  if(ts.some(t=>t.sc))return Infinity;
+  return ts.length;
+}
+// 임계경로를 구성하는 모든 '단계|역할' 조합을 소요기간 내림차순으로 반환한다.
+// (1위 역할이 상한에 걸려 더 못 늘리면, 다음 순위 역할로 넘어갈 수 있도록 전체 랭킹을 제공)
+function gBottleneckRanked(r){
+  if(!r)return [];
+  const ch={};
   r.tasks.forEach(t=>{const k=t.phase+'|'+t.role;ch[k]=(ch[k]||0)+t.dur;});
-  Object.keys(ch).forEach(k=>{const p=k.split('|')[0];
-    if(!ph[p]||ch[k]>ph[p].d)ph[p]={d:ch[k],r:k.split('|')[1]};});
-  let bp=null;Object.keys(ph).forEach(p=>{if(!bp||ph[p].d>ph[bp].d)bp=p;});
-  return bp?ph[bp].r:null;
+  return Object.keys(ch).map(k=>{const i=k.indexOf('|');return {phase:k.slice(0,i),role:k.slice(i+1),d:ch[k]};})
+    .sort((a,b)=>b.d-a.d);
+}
+function gBottleneck(r){
+  const ranked=gBottleneckRanked(r);
+  return ranked.length?ranked[0].role:null;
 }
 // 총 인원 N을 역할별 공수 비중에 따라 나눈다
 function gPar(tpl,scope,totalMD,N,extras){
@@ -3290,11 +3314,27 @@ function gSolve(cfg){
   if(cfg.mode==='A'){                    // 기간 + 공수 → 필요 인원
     const par={}; tpl.roles.forEach(r=>par[r]=1);
     let r=gLayout(tpl,cfg.scope,cfg.md,par,ex,cfg.batch),it=0;
+    const structCapRoles=[],orgCapRoles=[];
     while(r&&r.cpWd>wdAvail&&it<200){
-      const b=gBottleneck(r); if(!b||(par[b]||1)>=10)break;
-      par[b]=(par[b]||1)+1; r=gLayout(tpl,cfg.scope,cfg.md,par,ex,cfg.batch); it++;
+      const ranked=gBottleneckRanked(r);
+      let picked=null;
+      for(const cand of ranked){
+        const orgCap=gRoleCap(cand.role), structCap=gTaskSplitCap(tpl,cand.phase,cand.role);
+        if((par[cand.role]||1)<Math.min(orgCap,structCap)){ picked=cand; break; }
+      }
+      if(!picked){
+        // 모든 후보 역할이 상한에 도달 — 더는 인원으로 못 줄인다. 어떤 상한 때문인지 기록하고 종료.
+        ranked.forEach(cand=>{
+          const orgCap=gRoleCap(cand.role), structCap=gTaskSplitCap(tpl,cand.phase,cand.role);
+          if(structCap<orgCap&&(par[cand.role]||1)>=structCap)structCapRoles.push(cand.role);
+          else if((par[cand.role]||1)>=orgCap)orgCapRoles.push(cand.role);
+        });
+        break;
+      }
+      par[picked.role]=(par[picked.role]||1)+1; r=gLayout(tpl,cfg.scope,cfg.md,par,ex,cfg.batch); it++;
     }
-    return gPack(tpl,cfg,r,par,wdAvail,startISO);
+    return gPack(tpl,cfg,r,par,wdAvail,startISO,
+      {structCapRoles:[...new Set(structCapRoles)],orgCapRoles:[...new Set(orgCapRoles)]});
   }
   if(cfg.mode==='B'){                    // 기간 + 인원 → 소화 가능 공수
     let lo=Math.max(1,tpl.tasks.length),hi=Math.max(lo,cfg.people*wdAvail),best=null,bp=null;
@@ -3314,7 +3354,7 @@ function gSolve(cfg){
 }
 
 // ---- 결과 + 타당성 진단 ----
-function gPack(tpl,cfg,r,par,wdAvail,startISO){
+function gPack(tpl,cfg,r,par,wdAvail,startISO,hints){
   if(!r)return null;
   const openISO = cfg.mode==='C'
     ? iso(gAddWd(gAddWd(D(startISO),Math.max(0,r.cpWd-1)),cfg.buffer))
@@ -3335,10 +3375,9 @@ function gPack(tpl,cfg,r,par,wdAvail,startISO){
   const short=cnt.filter(k=>(pool[k]||0)+1e-9<need[k])
                  .map(k=>({r:k,need:need[k],have:Math.round((pool[k]||0)*10)/10}));
   const slack=wdAvail-r.cpWd;
-  // 역할당 필요 인원이 크게 몰리면(기본 5명 이상), 상한(10명) 안에서 계획이 '성립'하더라도
+  // 역할당 필요 인원이 그 역할의 조직 상한에 가까워지면(gHeavyWarnAt), 계획이 '성립'하더라도
   // 실제 채용·협업 관점에서 비현실적일 수 있으므로 경고를 강화한다 — 상한 자체는 낮추지 않는다.
-  const HEAVY_PAR=5;
-  const heavy=cnt.filter(k=>need[k]>=HEAVY_PAR).sort((a,b)=>need[b]-need[a]);
+  const heavy=cnt.filter(k=>need[k]>=gHeavyWarnAt(k)).sort((a,b)=>need[b]-need[a]);
   let verdict='ok',msg='';
   if(cfg.mode==='C'){
     verdict=short.length?'warn':'ok';
@@ -3354,13 +3393,22 @@ function gPack(tpl,cfg,r,par,wdAvail,startISO){
   }
   const fixes=[];
   if(heavy.length){
-    fixes.push({t:'인력 쏠림 경고',d:heavy.map(k=>k+' '+need[k]+'명(역할당 상한 10명까지 허용)').join(' · ')+
+    fixes.push({t:'인력 쏠림 경고',d:heavy.map(k=>k+' '+need[k]+'명(역할당 상한 '+gRoleCap(k)+'명)').join(' · ')+
       ' — 한 역할에 인원이 크게 몰려 있어 실제 채용·협업 관점에서 비현실적일 수 있습니다. 기간을 늘리거나 범위를 나누는 방안도 함께 검토하세요'});
+  }
+  if(hints&&hints.structCapRoles&&hints.structCapRoles.length){
+    fixes.push({t:'구조적 분할 한계',d:hints.structCapRoles.join(', ')+
+      ' 역할은 이 단계에서 실제로 나눌 수 있는 작업 자체가 한정적이라, 인원을 더 투입해도 기간이 줄지 않습니다 — 오버랩(단계 겹침)이나 기간 조정을 검토하세요'});
   }
   if(slack<0){
     fixes.push({t:'기간 연장',d:'오픈일을 '+(-slack)+' 근무일 뒤('+iso(gAddWd(D(openISO),-slack))+')로 옮기면 성립합니다'});
     const b=gBottleneck(r);
-    fixes.push({t:'인원 증원',d:'병목 역할은 '+(b||'-')+' 입니다 — 이 역할부터 늘리면 임계경로가 가장 빨리 줄어듭니다'});
+    const bBlocked=!!(b&&hints&&(((hints.structCapRoles||[]).indexOf(b)>=0)||((hints.orgCapRoles||[]).indexOf(b)>=0)));
+    if(bBlocked){
+      fixes.push({t:'인원 증원 한계',d:'병목 역할 '+b+'은 이미 상한에 도달해 더 늘릴 수 없습니다 — 기간 연장이나 오버랩 강화, 범위 축소를 검토하세요'});
+    }else{
+      fixes.push({t:'인원 증원',d:'병목 역할은 '+(b||'-')+' 입니다 — 이 역할부터 늘리면 임계경로가 가장 빨리 줄어듭니다'});
+    }
     const cut=Math.max(1,Math.min(80,Math.round((1-wdAvail/Math.max(1,r.cpWd))*100)));
     fixes.push({t:'범위 축소',d:'공수를 약 '+cut+'%('+Math.round(r.totalMD*cut/100)+' MD) 덜어내면 현재 기간에 들어옵니다'});
   }
