@@ -3213,13 +3213,13 @@ function gLayout(tpl,scope,totalMD,par,extras,batchN){
   expanded.forEach(x=>{ if(!byPh[x.t.p]){byPh[x.t.p]=[];phOrder.push(x.t.p);} byPh[x.t.p].push(x); });
   const pIdx=id=>{const k=tpl.phases.findIndex(p=>p.id===id);return k<0?999:k;};
   phOrder.sort((a,b)=>pIdx(a)-pIdx(b));
-  const out=[]; let prevLast=[],cpWd=0,prevBatch={};
+  const out=[]; let prevLast=[],prevBatch={};
   phOrder.forEach(pid=>{
     const chains={},corder=[];
     byPh[pid].forEach(x=>{ if(!chains[x.t.r]){chains[x.t.r]=[];corder.push(x.t.r);} chains[x.t.r].push(x); });
-    const lasts=[]; let phDur=0,seq=0; const curBatch={};
+    const lasts=[]; let seq=0; const curBatch={};
     corder.forEach(r=>{
-      let prevId=null,cd=0,np=Math.max(1,par[r]||1);
+      let prevId=null,np=Math.max(1,par[r]||1);
       chains[r].forEach(x=>{
         seq++; const id=pid+'.'+seq;
         const dur=Math.max(1,Math.ceil(x.md/np));
@@ -3237,14 +3237,57 @@ function gLayout(tpl,scope,totalMD,par,extras,batchN){
         }
         out.push({id:id,name:x.t.n,phase:pid,role:r,md:x.md,dur:dur,deps:deps,status:'예정',assignees:[]});
         if(bn>=2&&x.batchIdx!=null)(curBatch[x.batchIdx]=curBatch[x.batchIdx]||[]).push(id);
-        prevId=id; cd+=dur;
+        prevId=id;
       });
-      lasts.push(prevId); if(cd>phDur)phDur=cd;
+      lasts.push(prevId);
     });
-    cpWd+=phDur; prevLast=lasts.filter(Boolean); prevBatch=curBatch;
+    prevLast=lasts.filter(Boolean); prevBatch=curBatch;
   });
+  // 임계경로(cpWd)는 "단계별 소요일을 무조건 순차로 더한 값"이 아니라, 태스크가 실제로 갖고 있는
+  // 의존관계(deps) 그래프를 따라 정방향(forward-pass)으로 계산한다 — 실제 프로젝트 일정(compute())이
+  // 쓰는 방식과 동일한 원리. out 배열은 태스크가 자신이 의존하는 태스크보다 항상 뒤에 push되므로
+  // 이미 위상정렬(topological order) 상태라 한 번의 순회로 충분하다.
+  // 이렇게 하면 템플릿에 이미 정의된 세부 의존관계(예: 와이어프레임 완료 직후 UI 디자인 착수처럼
+  // 설계·디자인 단계가 실무에서 흔히 겹쳐 흐르는 흐름)가 필요 기간 추정에 정확히 반영된다 —
+  // 예전에는 이런 의존관계가 있어도 무시하고 단계 전체가 끝나야 다음 단계가 시작한다고 가정했다.
+  const esWd={},efWd={};
+  out.forEach(t=>{
+    const depEf=t.deps.map(d=>efWd[d]||0);
+    const es=depEf.length?Math.max.apply(null,depEf):0;
+    esWd[t.id]=es; efWd[t.id]=es+t.dur;
+  });
+  const cpWd=out.length?Math.max.apply(null,out.map(t=>efWd[t.id])):0;
+  // 동시 최대 인원(headPeak): 이제 단계 간에도 실제로 겹치는 구간이 생기므로(예: UI 디자인이
+  // UX 설계 도중에 착수), '어느 단계에 어떤 역할이 있는지'가 아니라 각 역할의 실제 활성 구간
+  // ([착수, 종료))이 워크데이 축에서 서로 겹치는 시점의 필요 인원(par) 합을 스윕라인으로 구해
+  // 그 최댓값을 쓴다 — cpWd와 같은 실제 의존관계 그래프를 근거로 하는 값이라 서로 어긋나지 않는다.
+  const byRole={};
+  out.forEach(t=>{
+    if(t.role==='전체')return;
+    (byRole[t.role]=byRole[t.role]||[]).push([esWd[t.id],efWd[t.id]]);
+  });
+  const merged=[];
+  Object.keys(byRole).forEach(role=>{
+    const ivs=byRole[role].sort((a,b)=>a[0]-b[0]);
+    let cur=null;
+    ivs.forEach(iv=>{
+      if(cur&&iv[0]<=cur[1]){ if(iv[1]>cur[1])cur[1]=iv[1]; }
+      else { if(cur)merged.push({role:role,s:cur[0],e:cur[1]}); cur=iv.slice(); }
+    });
+    if(cur)merged.push({role:role,s:cur[0],e:cur[1]});
+  });
+  const events=[];
+  merged.forEach(m=>{
+    const p=Math.max(1,par[m.role]||1);
+    events.push({t:m.s,d:p,end:false});
+    events.push({t:m.e,d:-p,end:true});
+  });
+  events.sort((a,b)=>a.t-b.t||(a.end===b.end?0:(a.end?-1:1)));
+  let curLoad=0,headPeak=0;
+  events.forEach(e=>{ curLoad+=e.d; if(curLoad>headPeak)headPeak=curLoad; });
+  if(!headPeak)headPeak=Math.max(1,Object.keys(byRole).length);
   const mdRole={}; out.forEach(t=>{mdRole[t.role]=(mdRole[t.role]||0)+t.md;});
-  return {tasks:out,cpWd:cpWd,totalMD:out.reduce((a,t)=>a+t.md,0),mdRole:mdRole,batch:bn>=2?bn:0};
+  return {tasks:out,cpWd:cpWd,totalMD:out.reduce((a,t)=>a+t.md,0),mdRole:mdRole,batch:bn>=2?bn:0,headPeak:headPeak};
 }
 
 // 임계경로를 가장 길게 만드는 역할(= 증원 1순위)
@@ -3363,14 +3406,10 @@ function gPack(tpl,cfg,r,par,wdAvail,startISO,hints){
   Object.keys(r.mdRole).forEach(k=>{need[k]=Math.max(1,par[k]||1);});
   const keys=Object.keys(need);
   const cnt=keys.filter(k=>k!=='전체');
-  const phRole={};
-  r.tasks.forEach(t=>{if(t.role==='전체')return;(phRole[t.phase]=phRole[t.phase]||{})[t.role]=1;});
-  let head=0;
-  Object.keys(phRole).forEach(p=>{
-    const h=Object.keys(phRole[p]).reduce((a,k)=>a+(need[k]||1),0);
-    if(h>head)head=h;
-  });
-  if(!head)head=Math.max(1,cnt.length);
+  // 동시 최대 인원은 gLayout이 실제 착수·종료 구간 겹침을 스윕라인으로 계산한 headPeak을 그대로 쓴다
+  // (예전에는 '어느 단계에 어떤 역할이 있나'로 근사했는데, 단계 간에도 실제로 겹치는 구간이 생기면서
+  // 그 근사가 실제 겹침을 과소평가할 수 있어 cpWd와 같은 근거의 값으로 통일했다).
+  const head=r.headPeak||Math.max(1,cnt.length);
   (WS.pool||[]).forEach(q=>{const k=gRoleMatch(q.role,cnt);if(k)pool[k]=(pool[k]||0)+(q.alloc==null?100:q.alloc)/100;});
   const short=cnt.filter(k=>(pool[k]||0)+1e-9<need[k])
                  .map(k=>({r:k,need:need[k],have:Math.round((pool[k]||0)*10)/10}));
